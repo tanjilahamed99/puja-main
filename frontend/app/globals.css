@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* ============================================================
+     THEME COLORS
+     Every color used across the admin panel (and, later, the
+     public site) is defined here. Change a value once and it
+     updates everywhere it's used — sidebar, buttons, badges,
+     tables, borders, etc.
+     ============================================================ */
+  --color-ivory: #FBF3DF;
+  --color-ivory-soft: #F6EAC9;
+  --color-surface: #FFFDF6;
+  --color-border: #E7D9B8;
+
+  --color-ink: #2B1B0E;
+  --color-ink-soft: #6B573C;
+
+  --color-gold: #D9A027;
+  --color-gold-deep: #B9791A;
+  --color-gold-soft: #F4C86A;
+
+  --color-maroon: #8C2F1B;
+  --color-maroon-deep: #6E2113;
+
+  --color-success: #3F7D4F;
+  --color-danger: #B23B3B;
+  --color-warning: #C68A1B;
+
+  /* Sidebar keeps its own tokens so it can stay dark even if the
+     main surface theme changes later. */
+  --sidebar-bg: #2B1B0E;
+  --sidebar-ink: #F3E6C9;
+  --sidebar-ink-soft: #C9B491;
+  --sidebar-active: #D9A027;
+
+  --font-display: 'Eczar', Georgia, 'Times New Roman', serif;
+  --font-body: 'Mukta', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+@layer components {
+  .input {
+    @apply w-full bg-[var(--color-ivory)] border border-[var(--color-border)] rounded-lg px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition-colors;
+  }
+  .input:focus {
+    @apply border-[var(--color-maroon)];
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
