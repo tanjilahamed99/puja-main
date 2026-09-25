@@ -15,7 +15,7 @@ const {
 
 const router = express.Router();
 
-// router.use(protect, authorize('student'));
+router.use(protect, authorize('student'));
 
 router.get("/courses", browseCourses);
 router.post("/courses/:id/enroll", enrollInCourse);

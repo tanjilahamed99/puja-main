@@ -19,7 +19,6 @@ const register = asyncHandler(async (req, res) => {
   }
 
   const user = await User.create({
-    _id: user._id,
     name,
     email,
     password,
@@ -27,7 +26,12 @@ const register = asyncHandler(async (req, res) => {
     role: "student",
   });
 
-  const payload = { name: user.name, email: user.email, role: user.role };
+  const payload = {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
 
   res.status(201).json({
     user: user.toSafeObject(),
@@ -48,10 +52,7 @@ const login = asyncHandler(async (req, res) => {
       });
     }
 
-    let user = null;
-    let role = null;
-
-    user = await User.findOne({
+    const user = await User.findOne({
       email: email.toLowerCase(),
     }).select("+password");
 
