@@ -41,7 +41,7 @@ const getTeachers = asyncHandler(async (req, res) => {
   const teachers = await User.find({ role: "teacher", isActive: true })
     .select("name email")
     .sort({ name: 1 });
-  res.json({ teachers });
+  res.json({ teachers,success:true });
 });
 
 // @route GET /api/admin/users/:id
@@ -51,7 +51,7 @@ const getUser = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("User not found");
   }
-  res.json({ user });
+  res.json({ user ,success:true});
 });
 
 // @route POST /api/admin/users — admin directly creates a teacher/admin/student account
@@ -88,7 +88,7 @@ const updateUser = asyncHandler(async (req, res) => {
   if (isActive !== undefined) user.isActive = isActive;
 
   await user.save();
-  res.json({ user: user.toSafeObject() });
+  res.json({ user: user.toSafeObject(),success:true });
 });
 
 // @route DELETE /api/admin/users/:id

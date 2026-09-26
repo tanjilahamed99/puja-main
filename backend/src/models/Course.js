@@ -12,8 +12,9 @@ const courseSchema = new mongoose.Schema(
       time: { type: String }, // e.g. "18:00"
       timezone: { type: String, default: 'Asia/Dhaka' },
     },
-    liveKitRoomId: { type: String },
     status: { type: String, enum: ['draft', 'active', 'archived'], default: 'draft' },
+    liveKitRoomId: { type: String },
+    image: { type: String },
     syllabus: [{ type: String }],
   },
   { timestamps: true }
