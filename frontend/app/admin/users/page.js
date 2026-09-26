@@ -582,7 +582,7 @@ function EditUserModal({ user, onClose, onUpdated }) {
       }
       onUpdated(data.user);
       onClose();
-      toast.success("Edit successful");
+      toast.success("Update successful");
     } catch (err) {
       setError(err?.response?.data?.message || "Could not update this user.");
     } finally {
