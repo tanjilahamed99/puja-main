@@ -9,7 +9,7 @@ const Navigate = (path) => {
 };
 
 API.interceptors.request.use((config) => {
-  const data = localStorage.getItem("service-center-auth");
+  const data = localStorage.getItem("puja-auth");
   const auth = JSON.parse(data);
   const token = auth?.state?.token;
 

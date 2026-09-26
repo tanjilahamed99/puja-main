@@ -25,7 +25,7 @@ const protect = asyncHandler(async (req, res, next) => {
     throw new Error('Not authorized — invalid or expired token');
   }
 
-  const user = await User.findById(decoded.id);
+  const user = await User.findById(decoded._id);
   if (!user || !user.isActive) {
     res.status(401);
     throw new Error('Not authorized — account not found or deactivated');
