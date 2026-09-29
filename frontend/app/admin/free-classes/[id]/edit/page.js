@@ -3,21 +3,26 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createFreeClass, getTeachers } from "@/action/admin";
+
 import Topbar from "@/components/admin/Topbar";
-import UploadImage from "@/components/UploadImage";
 import Field from "@/components/admin/Field";
+import { getFreeClass, getTeachers, updateFreeClass } from "@/action/admin";
+import UploadImage from "@/components/UploadImage";
 
 
-
-export default function NewFreeClassPage() {
+export default function EditFreeClassPage() {
+  const params = useParams();
   const router = useRouter();
 
-  const [teachers, setTeachers] = useState([]);
-  const [loadingTeachers, setLoadingTeachers] = useState(true);
+  const id = params?.id;
+
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadingTeachers, setLoadingTeachers] = useState(true);
+
+  const [teachers, setTeachers] = useState([]);
 
   const [form, setForm] = useState({
     title: "",
@@ -26,29 +31,98 @@ export default function NewFreeClassPage() {
     teacher: "",
     date: "",
     time: "",
+    status: "scheduled",
   });
 
   useEffect(() => {
-    loadTeachers();
-  }, []);
+    if (!id) return;
 
-  const loadTeachers = async () => {
+    loadData();
+  }, [id]);
+
+  const loadData = async () => {
     try {
-      setLoadingTeachers(true);
+      setLoading(true);
 
-      const res = await getTeachers();
+      const [classResponse, teachersResponse] =
+        await Promise.all([
+          getFreeClass(id),
+          getTeachers(),
+        ]);
 
-      setTeachers(res.data?.users || res.data?.teachers || []);
+      const freeClass =
+        classResponse.data?.freeClass;
+
+      const teacherList =
+        teachersResponse.data?.teachers ||
+        teachersResponse.data?.users ||
+        [];
+
+      setTeachers(teacherList);
+
+      if (!freeClass) {
+        toast.error("Free class not found");
+        router.push("/admin/free-classes");
+        return;
+      }
+
+      const classDate = freeClass.dateTime
+        ? new Date(freeClass.dateTime)
+        : null;
+
+      setForm({
+        title: freeClass.title || "",
+        description: freeClass.description || "",
+        image: freeClass.image || "",
+        teacher: freeClass.teacher?._id || "",
+        date: classDate
+          ? formatDateForInput(classDate)
+          : "",
+        time: classDate
+          ? formatTimeForInput(classDate)
+          : "",
+        status: freeClass.status || "scheduled",
+      });
     } catch (error) {
-      console.error("Failed to load teachers:", error);
+      console.error(
+        "Failed to load free class:",
+        error
+      );
 
       toast.error(
         error?.response?.data?.message ||
-          "Failed to load teachers"
+          "Failed to load free class"
       );
+
+      router.push("/admin/free-classes");
     } finally {
+      setLoading(false);
       setLoadingTeachers(false);
     }
+  };
+
+  const formatDateForInput = (date) => {
+    const year = date.getFullYear();
+    const month = String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
+    const day = String(
+      date.getDate()
+    ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
+
+  const formatTimeForInput = (date) => {
+    const hours = String(
+      date.getHours()
+    ).padStart(2, "0");
+
+    const minutes = String(
+      date.getMinutes()
+    ).padStart(2, "0");
+
+    return `${hours}:${minutes}`;
   };
 
   const handleChange = (e) => {
@@ -88,15 +162,6 @@ export default function NewFreeClassPage() {
     try {
       setSaving(true);
 
-      /*
-       * Convert date + time into a proper ISO date.
-       *
-       * Example:
-       * date = 2026-09-30
-       * time = 19:00
-       *
-       * => 2026-09-30T19:00:00
-       */
       const dateTime = new Date(
         `${form.date}T${form.time}`
       );
@@ -112,30 +177,59 @@ export default function NewFreeClassPage() {
         image: form.image,
         teacher: form.teacher || undefined,
         dateTime: dateTime.toISOString(),
+        status: form.status,
       };
 
-      await createFreeClass(payload);
+      await updateFreeClass(id, payload);
 
-      toast.success("Free class created successfully");
+      toast.success(
+        "Free class updated successfully"
+      );
 
       router.push("/admin/free-classes");
     } catch (error) {
-      console.error("Create free class error:", error);
+      console.error(
+        "Update free class error:",
+        error
+      );
 
       toast.error(
         error?.response?.data?.message ||
-          "Failed to create free class"
+          "Failed to update free class"
       );
     } finally {
       setSaving(false);
     }
   };
 
+  if (loading) {
+    return (
+      <>
+        <Topbar
+          title="Edit Free Class"
+          subtitle="Update free class details"
+        />
+
+        <main className="px-6 lg:px-10 py-8 max-w-2xl">
+          <div className="flex items-center justify-center py-20">
+            <div className="flex items-center gap-2 text-sm text-inkSoft">
+              <Loader2
+                size={18}
+                className="animate-spin"
+              />
+              Loading free class...
+            </div>
+          </div>
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
       <Topbar
-        title="Add Free Class"
-        subtitle="Schedule a new open session"
+        title="Edit Free Class"
+        subtitle="Update free class details"
       />
 
       <main className="px-6 lg:px-10 py-8 max-w-2xl">
@@ -237,10 +331,37 @@ export default function NewFreeClassPage() {
             </Field>
           </div>
 
+          {/* Status */}
+          <Field label="Status">
+            <select
+              name="status"
+              value={form.status}
+              onChange={handleChange}
+              className="input"
+            >
+              <option value="scheduled">
+                Scheduled
+              </option>
+
+              <option value="live">
+                Live
+              </option>
+
+              <option value="completed">
+                Completed
+              </option>
+
+              <option value="cancelled">
+                Cancelled
+              </option>
+            </select>
+          </Field>
+
           <p className="text-xs text-inkSoft">
-            Only logged-in registered users will be able to join —
-            guests are not permitted. A donation prompt is shown
-            automatically at the end of the session.
+            Only logged-in registered users will be able
+            to join. Updating the status manually can be
+            useful for managing completed or cancelled
+            sessions.
           </p>
 
           {/* Buttons */}
@@ -258,8 +379,8 @@ export default function NewFreeClassPage() {
               )}
 
               {saving
-                ? "Saving..."
-                : "Save Free Class"}
+                ? "Updating..."
+                : "Update Free Class"}
             </button>
 
             <Link
