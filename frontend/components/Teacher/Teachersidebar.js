@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { LayoutDashboard, BookOpen, Radio, Flame, Menu, X } from "lucide-react";
+import { LayoutDashboard, BookOpen, Radio, Flame, Menu, X, LogOut } from "lucide-react";
+import { toast } from "sonner";
+import { useAuthStore } from "@/features/Useauthstore";
 
 const NAV_ITEMS = [
   { href: "/teacher", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -15,9 +17,16 @@ const NAV_ITEMS = [
 export default function TeacherSidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-
   const isActive = (href, exact) =>
     exact ? pathname === href : pathname.startsWith(href);
+  const router = useRouter();
+
+  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const onLogout = () => {
+    clearAuth();
+    toast.success("Logged out.");
+    router.push("/");
+  };
 
   return (
     <>
@@ -86,6 +95,14 @@ export default function TeacherSidebar() {
           </span>
           <div className="mt-0.5 text-[var(--sidebar-ink-soft)]">Teacher</div>
         </div>
+
+        <button
+          type="button"
+          onClick={onLogout}
+          className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium text-slate-300 transition-colors hover:bg-red-500/10 hover:text-red-300 active:scale-[0.99]">
+          <LogOut className="h-5 w-5 shrink-0" />
+          <span>Logout</span>
+        </button>
       </aside>
     </>
   );
