@@ -125,6 +125,9 @@ export const getPaymentSummary = () => {
 export const getDonations = () => {
   return API.get("/admin/payments/donations");
 };
+export const getPaymentDonations = () => {
+  return API.get("/admin/payments/donations");
+};
 
 // ---------------- Dashboard ----------------
 

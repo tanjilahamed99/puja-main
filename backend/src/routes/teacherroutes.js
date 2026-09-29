@@ -9,6 +9,7 @@ const {
   getMyPujaBookings,
   getUpcomingSchedule,
   markAttendance,
+  getMyPujaBooking
 } = require("../controllers/teachercontroller");
 
 const router = express.Router();
@@ -24,6 +25,8 @@ router.get("/free-classes", getMyFreeClasses);
 
 router.get("/specific-puja/bookings", getMyPujaBookings);
 router.patch("/specific-puja/bookings/:id/complete", completePujaBooking);
+
+router.get("/specific-puja/bookings/:id", getMyPujaBooking);
 
 router.get("/schedule/upcoming", getUpcomingSchedule);
 

@@ -1,35 +1,50 @@
-import Link from 'next/link';
-import Topbar from '@/components/admin/Topbar';
-import PageHeader from '@/components/admin/PageHeader';
-import Badge from '@/components/admin/Badge';
+"use client";
 
-const myCourses = [
-  {
-    id: 'griha-pravesh',
-    title: 'Griha Pravesh Puja Basics',
-    teacher: 'Pandit R. Sharma',
-    status: 'Active',
-    startDate: 'Sep 1, 2026',
-  },
-  {
-    id: 'everyday-puja',
-    title: 'Everyday Puja & Aarti',
-    teacher: 'Pandit S. Chatterjee',
-    status: 'Pending',
-    startDate: 'Sep 18, 2026',
-  },
-  {
-    id: 'satyanarayan',
-    title: 'Satyanarayan Puja Vidhi',
-    teacher: 'Pandit R. Sharma',
-    status: 'Completed',
-    startDate: 'Jul 5, 2026',
-  },
-];
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import Topbar from "@/components/admin/Topbar";
+import PageHeader from "@/components/admin/PageHeader";
+import Badge from "@/components/admin/Badge";
+import { getMyEnrollments } from "@/action/student";
+import { formatDate } from "@/components/formatDate";
 
-const badgeVariant = { Active: 'success', Pending: 'warning', Completed: 'neutral' };
+const badgeVariant = {
+  active: "success",
+  pending: "warning",
+  completed: "neutral",
+  cancelled: "danger",
+};
+
+const statusLabel = {
+  active: "Active",
+  pending: "Pending",
+  completed: "Completed",
+  cancelled: "Cancelled",
+};
 
 export default function MyCoursesPage() {
+  const [enrollments, setEnrollments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const { data } = await getMyEnrollments();
+        setEnrollments(data.enrollments || []);
+      } catch (err) {
+        setError(
+          err?.response?.data?.message || "Could not load your courses. Please try again."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
   return (
     <>
       <Topbar title="My Courses" subtitle="Courses you're enrolled in" />
@@ -38,6 +53,7 @@ export default function MyCoursesPage() {
           title="Enrollment History"
           description="A completed course has a certificate waiting for you."
         />
+
         <div className="bg-surface border border-border rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -51,27 +67,71 @@ export default function MyCoursesPage() {
                 </tr>
               </thead>
               <tbody>
-                {myCourses.map((c) => (
-                  <tr key={c.id} className="border-b border-border last:border-0">
-                    <td className="px-5 py-3.5 font-medium">{c.title}</td>
-                    <td className="px-5 py-3.5 text-inkSoft">{c.teacher}</td>
-                    <td className="px-5 py-3.5 text-inkSoft">{c.startDate}</td>
-                    <td className="px-5 py-3.5">
-                      <Badge variant={badgeVariant[c.status]}>{c.status}</Badge>
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
-                      {c.status === 'Completed' ? (
-                        <Link href="/student/certificates" className="text-maroon font-medium text-sm hover:underline">
-                          View certificate
-                        </Link>
-                      ) : (
-                        <Link href={`/student/courses/${c.id}`} className="text-maroon font-medium text-sm hover:underline">
-                          Open
-                        </Link>
-                      )}
+                {loading && (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-8 text-center text-inkSoft">
+                      Loading your courses…
                     </td>
                   </tr>
-                ))}
+                )}
+
+                {!loading && error && (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-8 text-center text-danger">
+                      {error}
+                    </td>
+                  </tr>
+                )}
+
+                {!loading && !error && enrollments.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-8 text-center text-inkSoft">
+                      You haven&apos;t enrolled in any courses yet.{" "}
+                      <Link href="/student/courses" className="text-maroon font-medium hover:underline">
+                        Browse courses
+                      </Link>
+                    </td>
+                  </tr>
+                )}
+
+                {!loading &&
+                  !error &&
+                  enrollments.map((e) => {
+                    const course = e.course;
+                    return (
+                      <tr key={e._id} className="border-b border-border last:border-0">
+                        <td className="px-5 py-3.5 font-medium">
+                          {course?.title || "Course removed"}
+                        </td>
+                        <td className="px-5 py-3.5 text-inkSoft">
+                          {course?.teacher?.name || "Teacher TBD"}
+                        </td>
+                        <td className="px-5 py-3.5 text-inkSoft">{formatDate(e.startDate)}</td>
+                        <td className="px-5 py-3.5">
+                          <Badge variant={badgeVariant[e.status] || "neutral"}>
+                            {statusLabel[e.status] || e.status}
+                          </Badge>
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
+                          {e.status === "completed" ? (
+                            <Link
+                              href="/student/certificates"
+                              className="text-maroon font-medium text-sm hover:underline"
+                            >
+                              View certificate
+                            </Link>
+                          ) : course ? (
+                            <Link
+                              href={`/student/courses/${course._id}`}
+                              className="text-maroon font-medium text-sm hover:underline"
+                            >
+                              Open
+                            </Link>
+                          ) : null}
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>

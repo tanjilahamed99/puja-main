@@ -1,47 +1,122 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { ChevronLeft, CheckCircle2 } from 'lucide-react';
-import Topbar from '@/components/admin/Topbar';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ChevronLeft, CheckCircle2 } from "lucide-react";
+import Topbar from "@/components/admin/Topbar";
+import { browseCourses, getMyEnrollments, enrollInCourse } from "@/action/student";
 
-const COURSES = {
-  'griha-pravesh': {
-    title: 'Griha Pravesh Puja Basics',
-    teacher: 'Pandit R. Sharma',
-    category: 'Griha Puja',
-    price: '৳1,499',
-    schedule: 'Mon, Wed · 6:00 PM (Asia/Dhaka)',
-    description:
-      'Learn the essential rituals performed when moving into a new home — from the items you need to the mantras chanted at each step.',
-    enrolled: true,
-  },
-  'durga-puja': {
-    title: 'Durga Puja Rituals for Families',
-    teacher: 'Pandit K. Joshi',
-    category: 'Festival Puja',
-    price: '৳1,999',
-    schedule: 'Tue, Thu · 7:00 PM (Asia/Dhaka)',
-    description: 'A complete guide to performing Durga Puja at home, across all the key days of the festival.',
-    enrolled: false,
-  },
-  'everyday-puja': {
-    title: 'Everyday Puja & Aarti',
-    teacher: 'Pandit S. Chatterjee',
-    category: 'Everyday Rituals',
-    price: '৳999',
-    schedule: 'Sat · 9:00 AM (Asia/Dhaka)',
-    description: 'Daily rituals and aarti for a peaceful household — a great starting point if you are new to regular puja.',
-    enrolled: true,
-  },
-};
+function formatPrice(price) {
+  if (price === undefined || price === null) return "—";
+  return `৳${Number(price).toLocaleString("en-IN")}`;
+}
+
+function formatTime(time) {
+  if (!time) return "";
+  const [h, m] = time.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  return `${hour12}:${String(m).padStart(2, "0")} ${period}`;
+}
+
+function formatSchedule(schedule) {
+  if (!schedule || !schedule.days?.length) return "Schedule to be announced";
+  return `${schedule.days.join(", ")} · ${formatTime(schedule.time)} (${schedule.timezone || "Asia/Dhaka"})`;
+}
 
 export default function CourseDetailPage({ params }) {
-  const course = COURSES[params.id];
-  const [enrolled, setEnrolled] = useState(course?.enrolled || false);
-  const [method, setMethod] = useState('phonepe');
+  const [course, setCourse] = useState(null);
+  const [enrolled, setEnrolled] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState("");
 
-  if (!course) {
+  const [method, setMethod] = useState("phonepe");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
+  // There's no GET /student/courses/:id endpoint yet — only the list —
+  // so this pulls the full course list and finds the matching one.
+  // Worth adding a dedicated single-course route later if the course
+  // catalog grows large enough that this becomes wasteful.
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setLoadError("");
+      try {
+        const [coursesRes, enrollmentsRes] = await Promise.all([
+          browseCourses(),
+          getMyEnrollments(),
+        ]);
+
+        const match = (coursesRes.data.courses || []).find((c) => c._id === params.id);
+        if (!match) {
+          setNotFound(true);
+          return;
+        }
+        setCourse(match);
+
+        const isEnrolled = (enrollmentsRes.data.enrollments || []).some(
+          (e) => (e.course?._id || e.course) === params.id && e.status !== "cancelled"
+        );
+        setEnrolled(isEnrolled);
+      } catch (err) {
+        setLoadError(
+          err?.response?.data?.message || "Could not load this course. Please try again."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [params.id]);
+
+  const handleEnroll = async (e) => {
+    e.preventDefault();
+    setSubmitError("");
+    setSubmitting(true);
+    try {
+      const { data } = await enrollInCourse(course._id, { method });
+      if (!data.enrollment) {
+        setSubmitError(data.message || "Could not enroll. Please try again.");
+        return;
+      }
+      setEnrolled(true);
+    } catch (err) {
+      setSubmitError(
+        err?.response?.data?.message || "Could not enroll. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <>
+        <Topbar title="Loading course…" />
+        <main className="px-6 lg:px-10 py-8">
+          <p className="text-sm text-inkSoft">Loading…</p>
+        </main>
+      </>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <>
+        <Topbar title="Something went wrong" />
+        <main className="px-6 lg:px-10 py-8">
+          <p className="text-sm text-danger mb-4">{loadError}</p>
+          <Link href="/student/courses" className="text-maroon font-medium text-sm hover:underline">
+            Back to courses
+          </Link>
+        </main>
+      </>
+    );
+  }
+
+  if (notFound || !course) {
     return (
       <>
         <Topbar title="Course not found" />
@@ -54,16 +129,9 @@ export default function CourseDetailPage({ params }) {
     );
   }
 
-  const handleEnroll = (e) => {
-    e.preventDefault();
-    // No backend wired up yet — this would call
-    // POST /api/student/courses/:id/enroll with { method }
-    setEnrolled(true);
-  };
-
   return (
     <>
-      <Topbar title={course.title} subtitle={course.teacher} />
+      <Topbar title={course.title} subtitle={course.teacher?.name || "Teacher TBD"} />
       <main className="px-6 lg:px-10 py-8 max-w-2xl">
         <Link
           href="/student/courses"
@@ -81,11 +149,11 @@ export default function CourseDetailPage({ params }) {
           <div className="grid sm:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-inkSoft">Teacher</p>
-              <p className="font-medium mt-0.5">{course.teacher}</p>
+              <p className="font-medium mt-0.5">{course.teacher?.name || "Teacher TBD"}</p>
             </div>
             <div>
               <p className="text-inkSoft">Schedule</p>
-              <p className="font-medium mt-0.5">{course.schedule}</p>
+              <p className="font-medium mt-0.5">{formatSchedule(course.schedule)}</p>
             </div>
           </div>
 
@@ -98,7 +166,7 @@ export default function CourseDetailPage({ params }) {
             ) : (
               <form onSubmit={handleEnroll} className="space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-3">
-                  <span className="font-display text-2xl font-semibold">{course.price}</span>
+                  <span className="font-display text-2xl font-semibold">{formatPrice(course.price)}</span>
                   <select
                     value={method}
                     onChange={(e) => setMethod(e.target.value)}
@@ -108,11 +176,15 @@ export default function CourseDetailPage({ params }) {
                     <option value="paypal">Pay with PayPal</option>
                   </select>
                 </div>
+
+                {submitError && <p className="text-sm text-danger">{submitError}</p>}
+
                 <button
                   type="submit"
-                  className="w-full sm:w-auto bg-maroon text-ivory px-6 py-2.5 rounded-lg text-sm font-semibold"
+                  disabled={submitting}
+                  className="w-full sm:w-auto bg-maroon text-ivory px-6 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
                 >
-                  Enroll Now — Full Package
+                  {submitting ? "Enrolling…" : "Enroll Now — Full Package"}
                 </button>
               </form>
             )}

@@ -22,14 +22,18 @@ export const getMyFreeClasses = () => {
   return API.get("/teacher/free-classes");
 };
 
+export const getUpcomingSchedule = () => {
+  return API.get("/teacher/schedule/upcoming");
+};
+
 export const getMyPujaBookings = () => {
   return API.get("/teacher/specific-puja/bookings");
 };
 
-export const completePujaBooking = (bookingId) => {
-  return API.patch(`/teacher/specific-puja/bookings/${bookingId}/complete`);
+export const getMyPujaBooking = (id) => {
+  return API.get(`/teacher/specific-puja/bookings/${id}`);
 };
 
-export const getUpcomingSchedule = () => {
-  return API.get("/teacher/schedule/upcoming");
+export const completePujaBooking = (bookingId) => {
+  return API.patch(`/teacher/specific-puja/bookings/${bookingId}/complete`);
 };

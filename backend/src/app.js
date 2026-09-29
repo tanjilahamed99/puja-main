@@ -12,6 +12,7 @@ const pujaRoutes = require("./routes/pujaRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const students = require("./routes/studentroutes");
+const teachers = require("./routes/teacherroutes");
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use("/api/admin/specific-puja", pujaRoutes);
 app.use("/api/admin/payments", paymentRoutes);
 app.use("/api/admin/dashboard", dashboardRoutes);
 app.use("/api/student", students);
+app.use("/api/teacher", teachers);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Loader2, Plus, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {
+  ChevronLeft,
+  Loader2,
+  Plus,
+  X,
+} from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import Topbar from "@/components/admin/Topbar";
@@ -11,16 +16,22 @@ import Field from "@/components/admin/Field";
 
 import {
   getTeachers,
-  createPujaPackage,
+  getPujaPackages,
+  updatePujaPackage,
 } from "@/action/admin";
 
-export default function NewSpecificPujaPage() {
+export default function EditSpecificPujaPage() {
+  const params = useParams();
   const router = useRouter();
 
-  const [teachers, setTeachers] = useState([]);
+  const id = params?.id;
+
+  const [loading, setLoading] = useState(true);
   const [loadingTeachers, setLoadingTeachers] =
     useState(true);
   const [saving, setSaving] = useState(false);
+
+  const [teachers, setTeachers] = useState([]);
 
   const [form, setForm] = useState({
     name: "",
@@ -36,26 +47,73 @@ export default function NewSpecificPujaPage() {
   const [newField, setNewField] = useState("");
 
   useEffect(() => {
-    loadTeachers();
-  }, []);
+    if (!id) return;
 
-  const loadTeachers = async () => {
+    loadData();
+  }, [id]);
+
+  const loadData = async () => {
     try {
-      const res = await getTeachers();
+      setLoading(true);
 
-      setTeachers(
-        res.data?.teachers ||
-          res.data?.users ||
-          []
+      const [packagesResponse, teachersResponse] =
+        await Promise.all([
+          getPujaPackages(),
+          getTeachers(),
+        ]);
+
+      const packages =
+        packagesResponse.data?.packages || [];
+
+      const teacherList =
+        teachersResponse.data?.teachers ||
+        teachersResponse.data?.users ||
+        [];
+
+      setTeachers(teacherList);
+
+      const pkg = packages.find(
+        (item) => item._id === id
+      );
+
+      if (!pkg) {
+        toast.error("Puja package not found");
+
+        router.push("/admin/specific-puja");
+
+        return;
+      }
+
+      setForm({
+        name: pkg.name || "",
+        description: pkg.description || "",
+        price:
+          pkg.price !== undefined
+            ? String(pkg.price)
+            : "",
+        teacher: pkg.teacher?._id || "",
+        status: pkg.status || "draft",
+      });
+
+      setRequiredFields(
+        Array.isArray(pkg.requiredInfoFields)
+          ? pkg.requiredInfoFields
+          : []
       );
     } catch (error) {
-      console.error(error);
+      console.error(
+        "Failed to load package:",
+        error
+      );
 
       toast.error(
         error?.response?.data?.message ||
-          "Failed to load teachers"
+          "Failed to load puja package"
       );
+
+      router.push("/admin/specific-puja");
     } finally {
+      setLoading(false);
       setLoadingTeachers(false);
     }
   };
@@ -80,7 +138,8 @@ export default function NewSpecificPujaPage() {
     if (
       requiredFields.some(
         (item) =>
-          item.toLowerCase() === field.toLowerCase()
+          item.toLowerCase() ===
+          field.toLowerCase()
       )
     ) {
       toast.error("This field already exists");
@@ -120,7 +179,7 @@ export default function NewSpecificPujaPage() {
     try {
       setSaving(true);
 
-      await createPujaPackage({
+      await updatePujaPackage(id, {
         name: form.name.trim(),
         description: form.description.trim(),
         price: Number(form.price),
@@ -130,30 +189,51 @@ export default function NewSpecificPujaPage() {
       });
 
       toast.success(
-        "Puja package created successfully"
+        "Puja package updated successfully"
       );
 
       router.push("/admin/specific-puja");
     } catch (error) {
       console.error(
-        "Create package error:",
+        "Update package error:",
         error
       );
 
       toast.error(
         error?.response?.data?.message ||
-          "Failed to create puja package"
+          "Failed to update puja package"
       );
     } finally {
       setSaving(false);
     }
   };
 
+  if (loading) {
+    return (
+      <>
+        <Topbar
+          title="Edit Puja Package"
+          subtitle="Update private puja package"
+        />
+
+        <main className="px-6 lg:px-10 py-8 max-w-2xl">
+          <div className="flex justify-center items-center py-20 text-sm text-inkSoft">
+            <Loader2
+              size={18}
+              className="animate-spin mr-2"
+            />
+            Loading package...
+          </div>
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
       <Topbar
-        title="Add Puja Package"
-        subtitle="Create a new private paid puja session"
+        title="Edit Puja Package"
+        subtitle="Update private puja package"
       />
 
       <main className="px-6 lg:px-10 py-8 max-w-2xl">
@@ -175,8 +255,8 @@ export default function NewSpecificPujaPage() {
               name="name"
               value={form.name}
               onChange={handleChange}
-              placeholder="e.g. Griha Shanti Puja"
               className="input"
+              placeholder="e.g. Griha Shanti Puja"
               required
             />
           </Field>
@@ -188,7 +268,7 @@ export default function NewSpecificPujaPage() {
               onChange={handleChange}
               rows={4}
               className="input"
-              placeholder="Describe what is included in this puja..."
+              placeholder="Describe what is included..."
             />
           </Field>
 
@@ -205,7 +285,6 @@ export default function NewSpecificPujaPage() {
                 onChange={handleChange}
                 min="0"
                 step="1"
-                placeholder="2999"
                 className="input pl-8"
                 required
               />
@@ -240,15 +319,15 @@ export default function NewSpecificPujaPage() {
             </select>
           </Field>
 
-          {/* Required information */}
+          {/* Required fields */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Required customer information
             </label>
 
             <p className="text-xs text-inkSoft mb-3">
-              Add information that the customer must
-              provide when booking this puja.
+              These fields will be requested from the
+              customer when booking this package.
             </p>
 
             <div className="flex gap-2">
@@ -342,8 +421,8 @@ export default function NewSpecificPujaPage() {
               )}
 
               {saving
-                ? "Saving..."
-                : "Save Package"}
+                ? "Updating..."
+                : "Update Package"}
             </button>
 
             <Link
