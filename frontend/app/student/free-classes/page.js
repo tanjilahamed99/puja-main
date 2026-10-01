@@ -6,12 +6,7 @@ import { Clock } from "lucide-react";
 import Topbar from "@/components/admin/Topbar";
 import PageHeader from "@/components/admin/PageHeader";
 import { browseFreeClasses } from "@/action/student";
-import {
-  msUntilJoinable,
-  formatCountdown,
-  formatClock,
-  getSessionStatus,
-} from "@/lib/joinWindow";
+import { msUntilJoinable, formatCountdown, formatClock, getSessionStatus } from "@/lib/joinWindow";
 
 const JOIN_LEAD_MINUTES = 1;
 const DEFAULT_DURATION_MINUTES = 60; // assumed until the backend stores a real duration per class
@@ -44,8 +39,7 @@ export default function FreeClassesPage() {
         setClasses(data.freeClasses || []);
       } catch (err) {
         setLoadError(
-          err?.response?.data?.message ||
-            "Could not load free classes. Please try again.",
+          err?.response?.data?.message || "Could not load free classes. Please try again."
         );
       } finally {
         setLoading(false);
@@ -61,43 +55,29 @@ export default function FreeClassesPage() {
 
   return (
     <>
-      <Topbar
-        title="Free Classes"
-        subtitle="Open to any logged-in member — no purchase needed"
-      />
+      <Topbar title="Free Classes" subtitle="Open to any logged-in member — no purchase needed" />
       <main className="px-6 lg:px-10 py-8">
         <PageHeader
           title="Upcoming Free Classes"
           description={`The Join button unlocks ${JOIN_LEAD_MINUTES} minute before each session starts.`}
         />
 
-        {loading && (
-          <p className="text-sm text-inkSoft">Loading free classes…</p>
-        )}
-        {!loading && loadError && (
-          <p className="text-sm text-danger">{loadError}</p>
-        )}
+        {loading && <p className="text-sm text-inkSoft">Loading free classes…</p>}
+        {!loading && loadError && <p className="text-sm text-danger">{loadError}</p>}
         {!loading && !loadError && classes.length === 0 && (
-          <p className="text-sm text-inkSoft">
-            No free classes are scheduled right now.
-          </p>
+          <p className="text-sm text-inkSoft">No free classes are scheduled right now.</p>
         )}
 
         {!loading && !loadError && classes.length > 0 && (
           <div className="space-y-4">
             {classes.map((c) => {
-              const durationMinutes =
-                c.durationMinutes || DEFAULT_DURATION_MINUTES;
+              const durationMinutes = c.durationMinutes || DEFAULT_DURATION_MINUTES;
               const status = getSessionStatus(c.dateTime, {
                 leadMinutes: JOIN_LEAD_MINUTES,
                 durationMinutes,
                 nowMs: now,
               });
-              const remainingMs = msUntilJoinable(
-                c.dateTime,
-                JOIN_LEAD_MINUTES,
-                now,
-              );
+              const remainingMs = msUntilJoinable(c.dateTime, JOIN_LEAD_MINUTES, now);
               const isClose = remainingMs <= ONE_HOUR_MS;
 
               return (
@@ -105,17 +85,13 @@ export default function FreeClassesPage() {
                   key={c._id}
                   className={`bg-surface border border-border rounded-xl p-5 ${
                     status === "ended" ? "opacity-60" : ""
-                  }`}>
+                  }`}
+                >
                   <div className="flex items-center justify-between gap-4 flex-wrap">
                     <div>
                       <h3 className="font-display font-semibold">{c.title}</h3>
-
-                      <p className="text-sm text-inkSoft mt-0.5 mb-2">
-                        {c.description}
-                      </p>
-                      <p className="text-sm text-inkSoft">
-                        {c.teacher?.name || "Teacher TBD"} ·{" "}
-                        {formatSessionTime(c.dateTime)}
+                      <p className="text-sm text-inkSoft mt-0.5">
+                        {c.teacher?.name || "Teacher TBD"} · {formatSessionTime(c.dateTime)}
                       </p>
                     </div>
 
@@ -126,25 +102,24 @@ export default function FreeClassesPage() {
                     ) : status === "joinable" ? (
                       <button
                         type="button"
-                        onClick={() =>
-                          router.push(`/student/free-classes/${c._id}/room`)
-                        }
-                        className="bg-maroon text-ivory px-5 py-2.5 rounded-lg text-sm font-semibold">
+                        onClick={() => router.push(`/live/${c._id}`)}
+                        className="bg-maroon text-ivory px-5 py-2.5 rounded-lg text-sm font-semibold"
+                      >
                         Join Class
                       </button>
                     ) : isClose ? (
                       <span
                         title={`The Join button unlocks ${JOIN_LEAD_MINUTES} minute before start`}
-                        className="inline-flex items-center gap-2 bg-ivorySoft text-maroon px-5 py-2.5 rounded-lg text-sm font-semibold cursor-not-allowed">
+                        className="inline-flex items-center gap-2 bg-ivorySoft text-maroon px-5 py-2.5 rounded-lg text-sm font-semibold cursor-not-allowed"
+                      >
                         <Clock size={15} />
-                        <span className="font-mono tabular-nums">
-                          {formatClock(remainingMs)}
-                        </span>
+                        <span className="font-mono tabular-nums">{formatClock(remainingMs)}</span>
                       </span>
                     ) : (
                       <span
                         title={`The Join button unlocks ${JOIN_LEAD_MINUTES} minute before start`}
-                        className="bg-ivorySoft text-inkSoft px-5 py-2.5 rounded-lg text-sm font-semibold cursor-not-allowed">
+                        className="bg-ivorySoft text-inkSoft px-5 py-2.5 rounded-lg text-sm font-semibold cursor-not-allowed"
+                      >
                         {formatCountdown(remainingMs)}
                       </span>
                     )}
