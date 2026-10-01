@@ -87,7 +87,7 @@ export default function HomePage() {
             <div>
               <div className="inline-flex items-center gap-2 text-sm font-semibold text-maroonDeep mb-5">
                 <Sparkles size={16} />
-                virtual sessions, guided by real teachers
+                test virtual sessions, guided by real teachers
               </div>
               <h1 className="font-display font-semibold text-ink leading-[1.08] text-4xl sm:text-5xl lg:text-[3.4rem] max-w-xl">
                 Learn puja the way it was meant to be taught
