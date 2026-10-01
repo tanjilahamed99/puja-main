@@ -3,7 +3,7 @@ const User = require("../models/User");
 const generateToken = require("../utils/generateToken");
 const bcrypt = require("bcryptjs/dist/bcrypt");
 
-// @route POST /api/auth/register  (public self-registration — always creates a student)
+// @route POST /api/auth/register  (public sef-registration — always creates a student)
 const register = asyncHandler(async (req, res) => {
   const { name, email, password, phone } = req.body;
 
