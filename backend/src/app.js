@@ -15,8 +15,12 @@ const students = require("./routes/studentroutes");
 const teachers = require("./routes/teacherroutes");
 
 const app = express();
-
-app.use(cors());
+app.use(
+  cors({
+    origin: [process.env.FRONTEND_URL, 'http://103.243.232.236:3010'],
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 if (process.env.NODE_ENV !== "test") {
