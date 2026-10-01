@@ -1,4 +1,5 @@
 const asyncHandler = require("../utils/asyncHandler");
+const { createLiveKitToken } = require("../utils/livekit");
 const Course = require("../models/Course");
 const Enrollment = require("../models/Enrollment");
 const Attendance = require("../models/Attendance");
@@ -6,7 +7,6 @@ const FreeClass = require("../models/FreeClass");
 const SpecificPujaPackage = require("../models/SpecificPujaPackage");
 const SpecificPujaBooking = require("../models/SpecificPujaBooking");
 
-// @route GET /api/teacher/courses — only courses assigned to the logged-in teacher
 exports.getMyCourses = asyncHandler(async (req, res) => {
   const courses = await Course.find({ teacher: req.user._id }).sort({
     createdAt: -1,
@@ -124,23 +124,6 @@ exports.getMyPujaBookings = asyncHandler(async (req, res) => {
   res.json({ bookings });
 });
 
-exports.getMyPujaBooking = asyncHandler(async (req, res) => {
-  const booking = await SpecificPujaBooking.findById(req.params.id)
-    .populate("package", "name description price teacher requiredInfoFields")
-    .populate("user", "name email");
-
-  if (
-    !booking ||
-    !booking.package ||
-    String(booking.package.teacher) !== String(req.user._id)
-  ) {
-    res.status(404);
-    throw new Error("Booking not found or not assigned to you");
-  }
-
-  res.json({ booking });
-});
-
 // @route PATCH /api/teacher/specific-puja/bookings/:id/complete
 exports.completePujaBooking = asyncHandler(async (req, res) => {
   const booking = await SpecificPujaBooking.findById(req.params.id).populate(
@@ -180,4 +163,73 @@ exports.getUpcomingSchedule = asyncHandler(async (req, res) => {
   ]);
 
   res.json({ freeClasses, pujaBookings });
+});
+
+// @route POST /api/teacher/free-classes/:id/start
+// Starts (or rejoins) this teacher's own free class. Flips the class to
+// 'live' the first time it's called so students browsing see it as live,
+// and mints a LiveKit token with roomAdmin so the teacher can moderate
+// (mute/remove participants) — distinct from a student's token, which
+// has roomAdmin: false.
+exports.startFreeClassSession = asyncHandler(async (req, res) => {
+  const freeClass = await FreeClass.findOne({
+    _id: req.params.id,
+    teacher: req.user._id,
+  });
+  if (!freeClass) {
+    res.status(404);
+    throw new Error("Free class not found or not assigned to you");
+  }
+
+  if (!freeClass.liveKitRoomId) {
+    res.status(400);
+    throw new Error("This class does not have a session room yet");
+  }
+
+  if (freeClass.status === "completed" || freeClass.status === "cancelled") {
+    res.status(400);
+    throw new Error(
+      `This class has already been ${freeClass.status} and can't be started`,
+    );
+  }
+
+  if (freeClass.status !== "live") {
+    freeClass.status = "live";
+    await freeClass.save();
+  }
+
+  const token = await createLiveKitToken({
+    roomName: freeClass.liveKitRoomId,
+    identity: String(req.user._id),
+    name: req.user.name,
+    roomAdmin: true,
+  });
+
+  res.json({
+    token,
+    roomName: freeClass.liveKitRoomId,
+    serverUrl: process.env.LIVEKIT_URL,
+    freeClass,
+  });
+});
+
+// @route POST /api/teacher/free-classes/:id/end
+// Marks the class completed. Only the explicit "End Class" action should
+// call this — a dropped connection or page refresh should NOT finalize
+// the class, so this is never triggered by a LiveKit disconnect event,
+// only by the teacher deliberately ending the session.
+exports.endFreeClassSession = asyncHandler(async (req, res) => {
+  const freeClass = await FreeClass.findOne({
+    _id: req.params.id,
+    teacher: req.user._id,
+  });
+  if (!freeClass) {
+    res.status(404);
+    throw new Error("Free class not found or not assigned to you");
+  }
+
+  freeClass.status = "completed";
+  await freeClass.save();
+
+  res.json({ freeClass });
 });

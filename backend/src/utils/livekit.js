@@ -4,7 +4,7 @@ const { AccessToken } = require("livekit-server-sdk");
 // This runs entirely locally (no network call to LiveKit needed to mint
 // the token) — LIVEKIT_API_KEY/LIVEKIT_API_SECRET just need to match
 // whatever your LiveKit server (Cloud or self-hosted) was configured with.
-async function createLiveKitToken({ roomName, identity, name }) {
+async function createLiveKitToken({ roomName, identity, name, roomAdmin = false }) {
   const at = new AccessToken(process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET, {
     identity,
     name,
@@ -16,6 +16,8 @@ async function createLiveKitToken({ roomName, identity, name }) {
     roomJoin: true,
     canPublish: true,
     canSubscribe: true,
+    canPublishData: true,
+    roomAdmin, // true for teachers — lets them mute/remove participants
   });
 
   return at.toJwt();

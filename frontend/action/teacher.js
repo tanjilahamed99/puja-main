@@ -37,3 +37,9 @@ export const getMyPujaBooking = (id) => {
 export const completePujaBooking = (bookingId) => {
   return API.patch(`/teacher/specific-puja/bookings/${bookingId}/complete`);
 };
+
+export const startFreeClassSession = (freeClassId) =>
+  API.post(`/teacher/free-classes/${freeClassId}/start`);
+
+export const endFreeClassSession = (freeClassId) =>
+  API.post(`/teacher/free-classes/${freeClassId}/end`);
