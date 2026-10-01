@@ -20,6 +20,6 @@ jobs:
           username: root
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /var/www/projects/service-center
+            cd /var/www/projects/puja-main
             git pull
             docker compose up -d --build
