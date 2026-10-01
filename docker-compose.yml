@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    container_name: sanatan-path-backend
+    ports:
+      - "5015:5000"
+    restart: always
+
+  frontend:
+    build: ./frontend
+    container_name: sanatan-path-frontend
+    ports:
+      - "3010:3000"
+    depends_on:
+      - backend
+    restart: always

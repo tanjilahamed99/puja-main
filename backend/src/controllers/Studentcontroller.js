@@ -1,20 +1,22 @@
-const asyncHandler = require('../utils/asyncHandler');
-const Course = require('../models/Course');
-const Enrollment = require('../models/Enrollment');
-const Payment = require('../models/Payment');
-const FreeClass = require('../models/FreeClass');
-const FreeClassParticipant = require('../models/FreeClassParticipant');
-const Donation = require('../models/Donation');
-const SpecificPujaPackage = require('../models/SpecificPujaPackage');
-const SpecificPujaBooking = require('../models/SpecificPujaBooking');
-const Certificate = require('../models/Certificate');
+const asyncHandler = require("../utils/asyncHandler");
+const Course = require("../models/Course");
+const Enrollment = require("../models/Enrollment");
+const Payment = require("../models/Payment");
+const FreeClass = require("../models/FreeClass");
+const FreeClassParticipant = require("../models/FreeClassParticipant");
+const Donation = require("../models/Donation");
+const SpecificPujaPackage = require("../models/SpecificPujaPackage");
+const SpecificPujaBooking = require("../models/SpecificPujaBooking");
+const Certificate = require("../models/Certificate");
+const generateToken = require("../utils/generateToken");
+const { createLiveKitToken } = require("../utils/livekit");
 
 // ---------------- Courses ----------------
 
 // @route GET /api/student/courses — browse active, published courses
 exports.browseCourses = asyncHandler(async (req, res) => {
-  const courses = await Course.find({ status: 'active' })
-    .populate('teacher', 'name')
+  const courses = await Course.find({ status: "active" })
+    .populate("teacher", "name")
     .sort({ createdAt: -1 });
   res.json({ courses });
 });
@@ -26,43 +28,43 @@ exports.browseCourses = asyncHandler(async (req, res) => {
 // up, this should instead create the Payment as 'pending' and let the
 // webhook flip it to 'success' before the Enrollment is activated.
 exports.enrollInCourse = asyncHandler(async (req, res) => {
-  const course = await Course.findOne({ _id: req.params.id, status: 'active' });
+  const course = await Course.findOne({ _id: req.params.id, status: "active" });
   if (!course) {
     res.status(404);
-    throw new Error('Course not found or not currently available');
+    throw new Error("Course not found or not currently available");
   }
 
   const existing = await Enrollment.findOne({
     student: req.user._id,
     course: course._id,
-    status: { $ne: 'cancelled' },
+    status: { $ne: "cancelled" },
   });
   if (existing) {
     res.status(409);
-    throw new Error('You are already enrolled in this course');
+    throw new Error("You are already enrolled in this course");
   }
 
   const { method, gatewayRef } = req.body;
   if (!method) {
     res.status(400);
-    throw new Error('Payment method is required');
+    throw new Error("Payment method is required");
   }
 
   const payment = await Payment.create({
     user: req.user._id,
-    type: 'subscription',
+    type: "subscription",
     course: course._id,
     amount: course.price,
     method,
     gatewayRef,
-    status: 'success',
+    status: "success",
   });
 
   const enrollment = await Enrollment.create({
     student: req.user._id,
     course: course._id,
     payment: payment._id,
-    status: 'active',
+    status: "active",
     startDate: new Date(),
   });
 
@@ -72,18 +74,52 @@ exports.enrollInCourse = asyncHandler(async (req, res) => {
 // @route GET /api/student/enrollments — this student's own enrollments
 exports.getMyEnrollments = asyncHandler(async (req, res) => {
   const enrollments = await Enrollment.find({ student: req.user._id })
-    .populate({ path: 'course', populate: { path: 'teacher', select: 'name' } })
-    .populate('certificate')
+    .populate({ path: "course", populate: { path: "teacher", select: "name" } })
+    .populate("certificate")
     .sort({ createdAt: -1 });
   res.json({ enrollments });
+});
+
+exports.getFreeClassLiveKitToken = asyncHandler(async (req, res) => {
+  const freeClass = await FreeClass.findById(req.params.id);
+  if (!freeClass) {
+    res.status(404);
+    throw new Error("Free class not found");
+  }
+
+  if (!freeClass.liveKitRoomId) {
+    res.status(400);
+    throw new Error("This class does not have a session room yet");
+  }
+
+  const JOIN_WINDOW_MS = 5 * 60 * 1000;
+  const opensAt = new Date(freeClass.dateTime).getTime() - JOIN_WINDOW_MS;
+  if (Date.now() < opensAt) {
+    res.status(403);
+    throw new Error("This class is not open to join yet");
+  }
+
+  const token = await createLiveKitToken({
+    roomName: freeClass.liveKitRoomId,
+    identity: String(req.user._id),
+    name: req.user.name,
+  });
+
+  res.json({
+    token,
+    roomName: freeClass.liveKitRoomId,
+    serverUrl: process.env.LIVEKIT_URL,
+  });
 });
 
 // ---------------- Free classes ----------------
 
 // @route GET /api/student/free-classes — open, upcoming/live sessions
 exports.browseFreeClasses = asyncHandler(async (req, res) => {
-  const freeClasses = await FreeClass.find({ status: { $in: ['scheduled', 'live'] } })
-    .populate('teacher', 'name')
+  const freeClasses = await FreeClass.find({
+    status: { $in: ["scheduled", "live"] },
+  })
+    .populate("teacher", "name")
     .sort({ dateTime: 1 });
   res.json({ freeClasses });
 });
@@ -93,7 +129,7 @@ exports.joinFreeClass = asyncHandler(async (req, res) => {
   const freeClass = await FreeClass.findById(req.params.id);
   if (!freeClass) {
     res.status(404);
-    throw new Error('Free class not found');
+    throw new Error("Free class not found");
   }
 
   const participant = await FreeClassParticipant.create({
@@ -113,13 +149,13 @@ exports.donateToFreeClass = asyncHandler(async (req, res) => {
   const freeClass = await FreeClass.findById(req.params.id);
   if (!freeClass) {
     res.status(404);
-    throw new Error('Free class not found');
+    throw new Error("Free class not found");
   }
 
   const { amount, method, gatewayRef } = req.body;
   if (!amount || !method) {
     res.status(400);
-    throw new Error('Amount and payment method are required');
+    throw new Error("Amount and payment method are required");
   }
 
   const donation = await Donation.create({
@@ -128,7 +164,7 @@ exports.donateToFreeClass = asyncHandler(async (req, res) => {
     amount,
     method,
     gatewayRef,
-    status: 'success',
+    status: "success",
   });
 
   res.status(201).json({ donation });
@@ -138,8 +174,8 @@ exports.donateToFreeClass = asyncHandler(async (req, res) => {
 
 // @route GET /api/student/specific-puja/packages
 exports.browsePujaPackages = asyncHandler(async (req, res) => {
-  const packages = await SpecificPujaPackage.find({ status: 'active' })
-    .populate('teacher', 'name')
+  const packages = await SpecificPujaPackage.find({ status: "active" })
+    .populate("teacher", "name")
     .sort({ createdAt: -1 });
   res.json({ packages });
 });
@@ -147,25 +183,28 @@ exports.browsePujaPackages = asyncHandler(async (req, res) => {
 // @route POST /api/student/specific-puja/packages/:id/book
 // body: { method, gatewayRef, participantInfo, preferredDateTime }
 exports.bookPujaPackage = asyncHandler(async (req, res) => {
-  const pkg = await SpecificPujaPackage.findOne({ _id: req.params.id, status: 'active' });
+  const pkg = await SpecificPujaPackage.findOne({
+    _id: req.params.id,
+    status: "active",
+  });
   if (!pkg) {
     res.status(404);
-    throw new Error('Puja package not found or not currently available');
+    throw new Error("Puja package not found or not currently available");
   }
 
   const { method, gatewayRef, participantInfo, preferredDateTime } = req.body;
   if (!method) {
     res.status(400);
-    throw new Error('Payment method is required');
+    throw new Error("Payment method is required");
   }
 
   const payment = await Payment.create({
     user: req.user._id,
-    type: 'specificPuja',
+    type: "specificPuja",
     amount: pkg.price,
     method,
     gatewayRef,
-    status: 'success',
+    status: "success",
   });
 
   const booking = await SpecificPujaBooking.create({
@@ -174,7 +213,7 @@ exports.bookPujaPackage = asyncHandler(async (req, res) => {
     payment: payment._id,
     participantInfo,
     scheduledDateTime: preferredDateTime || undefined,
-    status: 'pending', // admin confirms the final schedule and generates the LiveKit room
+    status: "pending", // admin confirms the final schedule and generates the LiveKit room
   });
 
   payment.pujaBooking = booking._id;
@@ -186,7 +225,7 @@ exports.bookPujaPackage = asyncHandler(async (req, res) => {
 // @route GET /api/student/specific-puja/bookings — this student's own bookings
 exports.getMyPujaBookings = asyncHandler(async (req, res) => {
   const bookings = await SpecificPujaBooking.find({ user: req.user._id })
-    .populate('package', 'name price')
+    .populate("package", "name price")
     .sort({ createdAt: -1 });
   res.json({ bookings });
 });
@@ -196,7 +235,7 @@ exports.getMyPujaBookings = asyncHandler(async (req, res) => {
 // @route GET /api/student/certificates
 exports.getMyCertificates = asyncHandler(async (req, res) => {
   const certificates = await Certificate.find({ student: req.user._id })
-    .populate('course', 'title')
+    .populate("course", "title")
     .sort({ issuedAt: -1 });
   res.json({ certificates });
 });

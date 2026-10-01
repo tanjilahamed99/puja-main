@@ -9,7 +9,7 @@ const {
   getMyPujaBookings,
   getUpcomingSchedule,
   markAttendance,
-  getMyPujaBooking
+  getMyPujaBooking,
 } = require("../controllers/teachercontroller");
 
 const router = express.Router();

@@ -11,11 +11,12 @@ const {
   getMyEnrollments,
   getMyPujaBookings,
   joinFreeClass,
+  getFreeClassLiveKitToken,
 } = require("../controllers/Studentcontroller");
 
 const router = express.Router();
 
-router.use(protect, authorize('student'));
+router.use(protect, authorize("student"));
 
 router.get("/courses", browseCourses);
 router.post("/courses/:id/enroll", enrollInCourse);
@@ -30,5 +31,7 @@ router.post("/specific-puja/packages/:id/book", bookPujaPackage);
 router.get("/specific-puja/bookings", getMyPujaBookings);
 
 router.get("/certificates", getMyCertificates);
+
+router.get("/free-classes/:id/livekit-token", getFreeClassLiveKitToken); // ← add this
 
 module.exports = router;
