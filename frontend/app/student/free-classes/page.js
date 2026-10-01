@@ -1,10 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Clock } from "lucide-react";
 import Topbar from "@/components/admin/Topbar";
 import PageHeader from "@/components/admin/PageHeader";
-import { Heart } from "lucide-react";
-import { browseFreeClasses, joinFreeClass, donateToFreeClass } from "@/action/student";
+import { browseFreeClasses } from "@/action/student";
+import {
+  msUntilJoinable,
+  formatCountdown,
+  formatClock,
+  getSessionStatus,
+} from "@/lib/joinWindow";
+
+const JOIN_LEAD_MINUTES = 1;
+const DEFAULT_DURATION_MINUTES = 60; // assumed until the backend stores a real duration per class
+const ONE_HOUR_MS = 60 * 60 * 1000;
 
 function formatSessionTime(dateTime) {
   if (!dateTime) return "Time TBD";
@@ -18,9 +29,11 @@ function formatSessionTime(dateTime) {
 }
 
 export default function FreeClassesPage() {
+  const router = useRouter();
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const load = async () => {
@@ -28,22 +41,11 @@ export default function FreeClassesPage() {
       setLoadError("");
       try {
         const { data } = await browseFreeClasses();
-        const withUiState = (data.freeClasses || []).map((c) => ({
-          ...c,
-          joined: false,
-          donated: false,
-          submittingJoin: false,
-          submittingDonate: false,
-          joinError: "",
-          donateError: "",
-          amount: "",
-          method: "phonepe",
-          liveKitRoomId: null,
-        }));
-        setClasses(withUiState);
+        setClasses(data.freeClasses || []);
       } catch (err) {
         setLoadError(
-          err?.response?.data?.message || "Could not load free classes. Please try again."
+          err?.response?.data?.message ||
+            "Could not load free classes. Please try again.",
         );
       } finally {
         setLoading(false);
@@ -52,143 +54,104 @@ export default function FreeClassesPage() {
     load();
   }, []);
 
-  const patchClass = (id, patch) => {
-    setClasses((prev) => prev.map((c) => (c._id === id ? { ...c, ...patch } : c)));
-  };
-
-  const join = async (id) => {
-    patchClass(id, { submittingJoin: true, joinError: "" });
-    try {
-      const { data } = await joinFreeClass(id);
-      patchClass(id, { joined: true, liveKitRoomId: data.liveKitRoomId || null });
-    } catch (err) {
-      const message = err?.response?.data?.message || "";
-      patchClass(id, {
-        joinError: message.includes("already exists")
-          ? "You've already joined this class."
-          : message || "Could not join this class. Please try again.",
-      });
-    } finally {
-      patchClass(id, { submittingJoin: false });
-    }
-  };
-
-  const donate = async (id, amount, method) => {
-    if (!amount || Number(amount) <= 0) return;
-    patchClass(id, { submittingDonate: true, donateError: "" });
-    try {
-      await donateToFreeClass(id, { amount: Number(amount), method });
-      patchClass(id, { donated: true });
-    } catch (err) {
-      patchClass(id, {
-        donateError:
-          err?.response?.data?.message || "Could not process the donation. Please try again.",
-      });
-    } finally {
-      patchClass(id, { submittingDonate: false });
-    }
-  };
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
-      <Topbar title="Free Classes" subtitle="Open to any logged-in member — no purchase needed" />
+      <Topbar
+        title="Free Classes"
+        subtitle="Open to any logged-in member — no purchase needed"
+      />
       <main className="px-6 lg:px-10 py-8">
         <PageHeader
           title="Upcoming Free Classes"
-          description="Join a session for free. A donation box appears once the class ends, entirely optional."
+          description={`The Join button unlocks ${JOIN_LEAD_MINUTES} minute before each session starts.`}
         />
 
-        {loading && <p className="text-sm text-inkSoft">Loading free classes…</p>}
-
-        {!loading && loadError && <p className="text-sm text-danger">{loadError}</p>}
-
+        {loading && (
+          <p className="text-sm text-inkSoft">Loading free classes…</p>
+        )}
+        {!loading && loadError && (
+          <p className="text-sm text-danger">{loadError}</p>
+        )}
         {!loading && !loadError && classes.length === 0 && (
-          <p className="text-sm text-inkSoft">No free classes are scheduled right now.</p>
+          <p className="text-sm text-inkSoft">
+            No free classes are scheduled right now.
+          </p>
         )}
 
         {!loading && !loadError && classes.length > 0 && (
           <div className="space-y-4">
-            {classes.map((c) => (
-              <div key={c._id} className="bg-surface border border-border rounded-xl p-5">
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                  <div>
-                    <h3 className="font-display font-semibold">{c.title}</h3>
-                    <p className="text-sm text-inkSoft mt-0.5">
-                      {c.teacher?.name || "Teacher TBD"} · {formatSessionTime(c.dateTime)}
-                    </p>
+            {classes.map((c) => {
+              const durationMinutes =
+                c.durationMinutes || DEFAULT_DURATION_MINUTES;
+              const status = getSessionStatus(c.dateTime, {
+                leadMinutes: JOIN_LEAD_MINUTES,
+                durationMinutes,
+                nowMs: now,
+              });
+              const remainingMs = msUntilJoinable(
+                c.dateTime,
+                JOIN_LEAD_MINUTES,
+                now,
+              );
+              const isClose = remainingMs <= ONE_HOUR_MS;
+
+              return (
+                <div
+                  key={c._id}
+                  className={`bg-surface border border-border rounded-xl p-5 ${
+                    status === "ended" ? "opacity-60" : ""
+                  }`}>
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <div>
+                      <h3 className="font-display font-semibold">{c.title}</h3>
+
+                      <p className="text-sm text-inkSoft mt-0.5 mb-2">
+                        {c.description}
+                      </p>
+                      <p className="text-sm text-inkSoft">
+                        {c.teacher?.name || "Teacher TBD"} ·{" "}
+                        {formatSessionTime(c.dateTime)}
+                      </p>
+                    </div>
+
+                    {status === "ended" ? (
+                      <span className="bg-ivorySoft text-inkSoft px-5 py-2.5 rounded-lg text-sm font-semibold">
+                        Ended
+                      </span>
+                    ) : status === "joinable" ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          router.push(`/student/free-classes/${c._id}/room`)
+                        }
+                        className="bg-maroon text-ivory px-5 py-2.5 rounded-lg text-sm font-semibold">
+                        Join Class
+                      </button>
+                    ) : isClose ? (
+                      <span
+                        title={`The Join button unlocks ${JOIN_LEAD_MINUTES} minute before start`}
+                        className="inline-flex items-center gap-2 bg-ivorySoft text-maroon px-5 py-2.5 rounded-lg text-sm font-semibold cursor-not-allowed">
+                        <Clock size={15} />
+                        <span className="font-mono tabular-nums">
+                          {formatClock(remainingMs)}
+                        </span>
+                      </span>
+                    ) : (
+                      <span
+                        title={`The Join button unlocks ${JOIN_LEAD_MINUTES} minute before start`}
+                        className="bg-ivorySoft text-inkSoft px-5 py-2.5 rounded-lg text-sm font-semibold cursor-not-allowed">
+                        {formatCountdown(remainingMs)}
+                      </span>
+                    )}
                   </div>
-                  {!c.joined ? (
-                    <button
-                      type="button"
-                      onClick={() => join(c._id)}
-                      disabled={c.submittingJoin}
-                      className="bg-maroon text-ivory px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
-                    >
-                      {c.submittingJoin ? "Joining…" : "Join Class"}
-                    </button>
-                  ) : (
-                    <span className="text-xs font-semibold text-success">Joined</span>
-                  )}
                 </div>
-
-                {c.joinError && <p className="text-sm text-danger mt-3">{c.joinError}</p>}
-
-                {c.joined && c.liveKitRoomId && (
-                  <p className="text-xs text-inkSoft mt-2">
-                    Session room: <span className="font-mono">{c.liveKitRoomId}</span>
-                  </p>
-                )}
-
-                {c.joined && !c.donated && (
-                  <div className="mt-4 pt-4 border-t border-border bg-ivorySoft -mx-5 -mb-5 px-5 py-4 rounded-b-xl">
-                    <div className="flex items-center gap-2 text-sm font-medium mb-3">
-                      <Heart size={16} className="text-maroon" />
-                      Enjoyed the class? Consider a donation to support the platform.
-                    </div>
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <input
-                        type="number"
-                        min="1"
-                        placeholder="Amount (৳)"
-                        value={c.amount}
-                        onChange={(e) => patchClass(c._id, { amount: e.target.value })}
-                        className="input w-32"
-                      />
-                      <select
-                        value={c.method}
-                        onChange={(e) => patchClass(c._id, { method: e.target.value })}
-                        className="input w-auto"
-                      >
-                        <option value="phonepe">PhonePe</option>
-                        <option value="paypal">PayPal</option>
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() => donate(c._id, c.amount, c.method)}
-                        disabled={c.submittingDonate || !c.amount}
-                        className="bg-maroon text-ivory px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
-                      >
-                        {c.submittingDonate ? "Processing…" : "Donate"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => patchClass(c._id, { donated: true })}
-                        className="text-sm text-inkSoft font-medium"
-                      >
-                        Skip
-                      </button>
-                    </div>
-                    {c.donateError && <p className="text-sm text-danger mt-2">{c.donateError}</p>}
-                  </div>
-                )}
-
-                {c.donated && (
-                  <p className="mt-4 pt-4 border-t border-border text-sm text-success font-medium">
-                    Thank you! 🙏
-                  </p>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>

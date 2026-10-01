@@ -1,76 +1,81 @@
-import Link from 'next/link';
-import { CheckCircle2, Users, BookOpen, Globe2, Heart, Sparkles } from 'lucide-react';
-import SiteHeader from '@/components/SiteHeader';
-import SiteFooter from '@/components/SiteFooter';
+"use client";
+
+import Link from "next/link";
+import { CheckCircle2, BookOpen, Users, Globe2, Heart, Sparkles, Flame } from "lucide-react";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
+import { useServiceLink } from "@/components/Useservicelink";
 
 const stats = [
-  { value: '40+', label: 'Guided courses' },
-  { value: '1,200+', label: 'Students taught' },
-  { value: '120', label: 'Weekly free sessions' },
-  { value: '3', label: 'Languages supported' },
+  { value: "40+", label: "Guided courses" },
+  { value: "1,200+", label: "Students taught" },
+  { value: "120", label: "Weekly free sessions" },
+  { value: "3", label: "Languages supported" },
 ];
 
 const steps = [
   {
-    title: 'Choose your path',
-    description: 'Enroll in a full course, drop into a free class, or book a specific puja just for you.',
+    title: "Choose your path",
+    description: "Enroll in a full course, drop into a free class, or book a specific puja just for you.",
   },
   {
-    title: 'Meet your teacher live',
-    description: 'Every session runs as a real-time video class — ask questions and follow along as you go.',
+    title: "Meet your teacher live",
+    description: "Every session runs as a real-time video class — ask questions and follow along as you go.",
   },
   {
-    title: 'Track your progress',
-    description: 'Finish a course and get a certificate. Keep returning to free classes any week you like.',
+    title: "Track your progress",
+    description: "Finish a course and get a certificate. Keep returning to free classes any week you like.",
   },
 ];
 
 const featuredCourses = [
   {
-    title: 'Griha Pravesh Puja Basics',
-    teacher: 'Pandit R. Sharma',
-    category: 'Griha Puja',
-    price: '৳1,499',
-    schedule: 'Mon, Wed · 6:00 PM',
+    title: "Griha Pravesh Puja Basics",
+    teacher: "Pandit R. Sharma",
+    category: "Griha Puja",
+    price: "৳1,499",
+    schedule: "Mon, Wed · 6:00 PM",
   },
   {
-    title: 'Durga Puja Rituals for Families',
-    teacher: 'Pandit K. Joshi',
-    category: 'Festival Puja',
-    price: '৳1,999',
-    schedule: 'Tue, Thu · 7:00 PM',
+    title: "Durga Puja Rituals for Families",
+    teacher: "Pandit K. Joshi",
+    category: "Festival Puja",
+    price: "৳1,999",
+    schedule: "Tue, Thu · 7:00 PM",
   },
   {
-    title: 'Everyday Puja & Aarti',
-    teacher: 'Pandit S. Chatterjee',
-    category: 'Everyday Rituals',
-    price: '৳999',
-    schedule: 'Sat · 9:00 AM',
+    title: "Everyday Puja & Aarti",
+    teacher: "Pandit S. Chatterjee",
+    category: "Everyday Rituals",
+    price: "৳999",
+    schedule: "Sat · 9:00 AM",
   },
 ];
 
 const teachers = [
-  { name: 'Pandit R. Sharma', focus: 'Griha Puja & Vedic Basics', initials: 'RS' },
-  { name: 'Pandit K. Joshi', focus: 'Festival Puja & Family Rituals', initials: 'KJ' },
-  { name: 'Pandit S. Chatterjee', focus: 'Everyday Puja & Mantras', initials: 'SC' },
+  { name: "Pandit R. Sharma", focus: "Griha Puja & Vedic Basics", initials: "RS" },
+  { name: "Pandit K. Joshi", focus: "Festival Puja & Family Rituals", initials: "KJ" },
+  { name: "Pandit S. Chatterjee", focus: "Everyday Puja & Mantras", initials: "SC" },
 ];
 
 const testimonials = [
   {
     quote:
-      'I grew up watching my grandmother perform Griha Pravesh but never learned the steps myself. This course finally gave me the confidence to do it for my own home.',
-    name: 'Ritika Sharma',
-    role: 'Student, Griha Pravesh Puja Basics',
+      "I grew up watching my grandmother perform Griha Pravesh but never learned the steps myself. This course finally gave me the confidence to do it for my own home.",
+    name: "Ritika Sharma",
+    role: "Student, Griha Pravesh Puja Basics",
   },
   {
     quote:
-      'The free classes are a wonderful way to try things out before committing. I joined on a whim and ended up learning mantras I still use every morning.',
-    name: 'Abir Hasan',
-    role: 'Free Class participant',
+      "The free classes are a wonderful way to try things out before committing. I joined on a whim and ended up learning mantras I still use every morning.",
+    name: "Abir Hasan",
+    role: "Free Class participant",
   },
 ];
 
 export default function HomePage() {
+  const goTo = useServiceLink();
+
   return (
     <>
       <SiteHeader />
@@ -92,18 +97,20 @@ export default function HomePage() {
                 conducted live online, in Hindi, Bangla, or English.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 mt-8">
-                <Link
-                  href="/register"
+                <button
+                  type="button"
+                  onClick={() => goTo("/student/courses", { guestPath: "/register" })}
                   className="bg-maroon text-ivory text-sm font-semibold px-6 py-3.5 rounded-lg text-center hover:opacity-90 transition"
                 >
                   Browse Courses
-                </Link>
-                <a
-                  href="#free-classes"
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goTo("/student/free-classes")}
                   className="border border-border text-ink text-sm font-semibold px-6 py-3.5 rounded-lg text-center hover:border-maroon transition-colors"
                 >
                   Join a Free Class
-                </a>
+                </button>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-12 pt-8 border-t border-border">
@@ -121,7 +128,7 @@ export default function HomePage() {
                 <div
                   aria-hidden="true"
                   className="absolute -top-10 left-1/2 -translate-x-1/2 w-56 h-56 rounded-full blur-2xl"
-                  style={{ background: 'radial-gradient(circle, rgba(244,200,106,0.5), transparent 65%)' }}
+                  style={{ background: "radial-gradient(circle, rgba(244,200,106,0.5), transparent 65%)" }}
                 />
                 <svg viewBox="0 0 240 220" className="relative w-full h-auto">
                   <ellipse cx="120" cy="170" rx="78" ry="18" fill="var(--color-gold)" opacity="0.22" />
@@ -164,9 +171,7 @@ export default function HomePage() {
             <div className="grid sm:grid-cols-3 gap-8 sm:gap-6">
               {steps.map((step, i) => (
                 <div key={step.title} className="border-t-2 border-maroon pt-5">
-                  <span className="font-display text-xl font-semibold text-goldDeep">
-                    0{i + 1}
-                  </span>
+                  <span className="font-display text-xl font-semibold text-goldDeep">0{i + 1}</span>
                   <h3 className="font-display font-semibold text-lg mt-2">{step.title}</h3>
                   <p className="text-inkSoft text-sm mt-2 leading-relaxed">{step.description}</p>
                 </div>
@@ -175,31 +180,31 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Two ways to learn */}
+        {/* Three ways to learn */}
         <section className="max-w-6xl mx-auto px-5 sm:px-8 py-16 sm:py-20">
           <div className="max-w-xl mb-12">
-            <h2 className="font-display font-semibold text-2xl sm:text-3xl text-ink">Two ways to learn</h2>
+            <h2 className="font-display font-semibold text-2xl sm:text-3xl text-ink">Three ways to learn</h2>
             <p className="text-inkSoft mt-3">
-              Structured guidance for the dedicated student, and an open door for anyone curious.
+              Structured guidance for the dedicated student, an open door for anyone curious, and a
+              private option for something just for you.
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-6">
-            <div id="courses" className="bg-surface border border-border rounded-2xl p-7 sm:p-8 flex flex-col gap-4">
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Subscription Courses */}
+            <div id="courses" className="bg-surface border border-border rounded-2xl p-7 flex flex-col gap-4">
               <span className="inline-flex self-start text-xs font-bold text-maroon bg-[#F7E5E5] px-3 py-1 rounded-full">
                 Subscription Courses
               </span>
-              <h3 className="font-display text-xl sm:text-2xl font-semibold">
-                Full guided courses with a real syllabus
-              </h3>
+              <h3 className="font-display text-xl font-semibold">A full guided course, start to finish</h3>
               <p className="text-inkSoft text-sm leading-relaxed">
                 Enroll once, get a fixed teacher and schedule, and learn a puja tradition end to end.
               </p>
-              <ul className="space-y-2.5 mt-2">
+              <ul className="space-y-2.5 mt-1">
                 {[
-                  'Assigned teacher & fixed weekly schedule',
-                  'One-time payment — full course, no subscriptions',
-                  'Certificate on completion',
+                  "Assigned teacher & fixed weekly schedule",
+                  "One-time payment — full course, no subscriptions",
+                  "Certificate on completion",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm">
                     <CheckCircle2 size={17} className="text-maroon shrink-0 mt-0.5" />
@@ -208,31 +213,34 @@ export default function HomePage() {
                 ))}
               </ul>
               <div className="mt-auto pt-5 border-t border-border flex items-center justify-between flex-wrap gap-3">
-                <span className="text-sm text-inkSoft">Starting from ৳999 per course</span>
-                <Link href="/register" className="text-sm font-semibold text-maroon hover:underline">
+                <span className="text-sm text-inkSoft">From ৳999</span>
+                <button
+                  type="button"
+                  onClick={() => goTo("/student/courses", { guestPath: "/register" })}
+                  className="text-sm font-semibold text-maroon hover:underline"
+                >
                   Browse courses →
-                </Link>
+                </button>
               </div>
             </div>
 
+            {/* Free Classes */}
             <div
               id="free-classes"
-              className="bg-[linear-gradient(165deg,var(--color-maroon)_0%,var(--color-maroon-deep)_100%)] text-[#F8E9CE] rounded-2xl p-7 sm:p-8 flex flex-col gap-4"
+              className="bg-[linear-gradient(165deg,var(--color-maroon)_0%,var(--color-maroon-deep)_100%)] text-[#F8E9CE] rounded-2xl p-7 flex flex-col gap-4"
             >
               <span className="inline-flex self-start text-xs font-bold px-3 py-1 rounded-full bg-white/15">
-                Free Classes &amp; Specific Puja
+                Free Classes
               </span>
-              <h3 className="font-display text-xl sm:text-2xl font-semibold">
-                Open sessions for everyone, and a private puja for you
-              </h3>
+              <h3 className="font-display text-xl font-semibold">Open to everyone, no cost to join</h3>
               <p className="text-[#EAD3B0] text-sm leading-relaxed">
-                Join any weekly free class at no cost, and support the platform with a donation if you wish.
+                Join any weekly session live. A donation box appears at the end — entirely optional.
               </p>
-              <ul className="space-y-2.5 mt-2">
+              <ul className="space-y-2.5 mt-1">
                 {[
-                  'Open to any logged-in member — no purchase needed',
-                  'Optional donation at the end of class',
-                  'Book a private, one-on-one specific puja anytime',
+                  "Open to any logged-in member — no purchase needed",
+                  "New sessions added every week",
+                  "Optional donation at the end of class",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm">
                     <CheckCircle2 size={17} className="shrink-0 mt-0.5" />
@@ -240,11 +248,49 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <div id="specific-puja" className="mt-auto pt-5 border-t border-white/20 flex items-center justify-between flex-wrap gap-3">
-                <span className="text-sm text-[#EAD3B0]">Free to join · specific puja booked separately</span>
-                <Link href="/register" className="text-sm font-semibold text-ivory hover:underline">
+              <div className="mt-auto pt-5 border-t border-white/20 flex items-center justify-between flex-wrap gap-3">
+                <span className="text-sm text-[#EAD3B0]">Free to join</span>
+                <button
+                  type="button"
+                  onClick={() => goTo("/student/free-classes")}
+                  className="text-sm font-semibold text-ivory hover:underline"
+                >
                   Join a class →
-                </Link>
+                </button>
+              </div>
+            </div>
+
+            {/* Specific Puja */}
+            <div id="specific-puja" className="bg-surface border border-border rounded-2xl p-7 flex flex-col gap-4">
+              <span className="inline-flex self-start items-center gap-1.5 text-xs font-bold text-goldDeep bg-goldSoft/30 px-3 py-1 rounded-full">
+                <Flame size={12} /> Specific Puja
+              </span>
+              <h3 className="font-display text-xl font-semibold">A private puja, just for you</h3>
+              <p className="text-inkSoft text-sm leading-relaxed">
+                Book a one-on-one session — after payment, it&apos;s scheduled individually and
+                conducted privately for you.
+              </p>
+              <ul className="space-y-2.5 mt-1">
+                {[
+                  "One-on-one, not a shared class",
+                  "Scheduled around your availability",
+                  "Conducted by a dedicated teacher",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm">
+                    <CheckCircle2 size={17} className="text-maroon shrink-0 mt-0.5" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-auto pt-5 border-t border-border flex items-center justify-between flex-wrap gap-3">
+                <span className="text-sm text-inkSoft">Booked separately</span>
+                <button
+                  type="button"
+                  onClick={() => goTo("/student/specific-puja")}
+                  className="text-sm font-semibold text-maroon hover:underline"
+                >
+                  Book a puja →
+                </button>
               </div>
             </div>
           </div>
@@ -258,9 +304,13 @@ export default function HomePage() {
                 <h2 className="font-display font-semibold text-2xl sm:text-3xl text-ink">Popular courses</h2>
                 <p className="text-inkSoft mt-3">A few of the courses students come back for.</p>
               </div>
-              <Link href="/register" className="text-sm font-semibold text-maroon hover:underline whitespace-nowrap">
+              <button
+                type="button"
+                onClick={() => goTo("/student/courses", { guestPath: "/register" })}
+                className="text-sm font-semibold text-maroon hover:underline whitespace-nowrap"
+              >
                 View all courses →
-              </Link>
+              </button>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {featuredCourses.map((c) => (
@@ -273,9 +323,13 @@ export default function HomePage() {
                   <p className="text-sm text-inkSoft">{c.schedule}</p>
                   <div className="mt-auto pt-3 border-t border-border flex items-center justify-between">
                     <span className="font-display text-lg font-semibold">{c.price}</span>
-                    <Link href="/register" className="text-xs font-semibold text-maroon hover:underline">
+                    <button
+                      type="button"
+                      onClick={() => goTo("/student/courses", { guestPath: "/register" })}
+                      className="text-xs font-semibold text-maroon hover:underline"
+                    >
                       Enroll →
-                    </Link>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -362,12 +416,13 @@ export default function HomePage() {
               </h2>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-              <Link
-                href="/register"
+              <button
+                type="button"
+                onClick={() => goTo("/student", { guestPath: "/register" })}
                 className="bg-[var(--sidebar-active)] text-[#2B1B0E] text-sm font-semibold px-6 py-3.5 rounded-lg text-center hover:opacity-90 transition"
               >
                 Create free account
-              </Link>
+              </button>
               <Link
                 href="/login"
                 className="border border-white/25 text-[var(--sidebar-ink)] text-sm font-semibold px-6 py-3.5 rounded-lg text-center hover:bg-white/5 transition-colors"

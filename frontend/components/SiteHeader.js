@@ -3,7 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import GoogleTranslate from "./GoogleTranslate";
+import { dashboardPathForRole } from "./dashboardPathForRole";
+import { useAuthStore } from "@/features/Useauthstore";
+// import GoogleTranslate from "./GoogleTranslate";
 
 const NAV_LINKS = [
   { href: "#how-it-works", label: "How it works" },
@@ -14,6 +16,13 @@ const NAV_LINKS = [
 
 export default function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const user = useAuthStore((state) => state.user);
+
+  // No useEffect/localStorage dance needed here — the store's default
+  // state (user: null) already matches what the server renders, so
+  // there's nothing that can mismatch on hydration. Once persist
+  // rehydrates, this component just re-renders with the real user.
+  const dashboardHref = user ? dashboardPathForRole(user.role) : "/login";
 
   return (
     <header className="sticky top-0 z-40 bg-ivory/95 backdrop-blur border-b border-border">
@@ -37,16 +46,26 @@ export default function SiteHeader() {
         </nav>
 
         <div className="hidden lg:flex items-center gap-3">
-          <Link
-            href="/login"
-            className="text-sm font-medium text-inkSoft hover:text-maroon transition-colors">
-            Log in
-          </Link>
-          <Link
-            href="/register"
-            className="bg-maroon text-ivory text-sm font-semibold px-5 py-2.5 rounded-lg hover:opacity-90 transition">
-            Get Started
-          </Link>
+          {user ? (
+            <Link
+              href={dashboardHref}
+              className="bg-maroon text-ivory text-sm font-semibold px-5 py-2.5 rounded-lg hover:opacity-90 transition">
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="text-sm font-medium text-inkSoft hover:text-maroon transition-colors">
+                Log in
+              </Link>
+              <Link
+                href="/register"
+                className="bg-maroon text-ivory text-sm font-semibold px-5 py-2.5 rounded-lg hover:opacity-90 transition">
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
 
         {/* <GoogleTranslate /> */}
@@ -74,18 +93,29 @@ export default function SiteHeader() {
             ))}
           </nav>
           <div className="flex flex-col gap-2.5 pt-2 border-t border-border">
-            <Link
-              href="/login"
-              onClick={() => setOpen(false)}
-              className="text-sm font-medium text-ink text-center py-2.5 border border-border rounded-lg">
-              Log in
-            </Link>
-            <Link
-              href="/register"
-              onClick={() => setOpen(false)}
-              className="bg-maroon text-ivory text-sm font-semibold text-center py-2.5 rounded-lg">
-              Get Started
-            </Link>
+            {user ? (
+              <Link
+                href={dashboardHref}
+                onClick={() => setOpen(false)}
+                className="bg-maroon text-ivory text-sm font-semibold text-center py-2.5 rounded-lg">
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className="text-sm font-medium text-ink text-center py-2.5 border border-border rounded-lg">
+                  Log in
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setOpen(false)}
+                  className="bg-maroon text-ivory text-sm font-semibold text-center py-2.5 rounded-lg">
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

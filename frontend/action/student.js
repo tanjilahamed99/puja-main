@@ -50,3 +50,11 @@ export const getMyPujaBookings = () => {
 export const getMyCertificates = () => {
   return API.get("/student/certificates");
 };
+
+export const getFreeClass = (id) => {
+  return API.get(`/student/free-classes/${id}`);
+};
+
+export const getFreeClassLiveKitToken = (id) => {
+  return API.get(`/student/free-classes/${id}/livekit-token`);
+};
