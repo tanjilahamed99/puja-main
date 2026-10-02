@@ -177,7 +177,7 @@ export default function TeacherCoursesPage() {
                       <td className="px-5 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-4">
                           <Link
-                            href={`/teacher/courses/${course._id}/live`}
+                            href={`/live/courses/teacher/${course._id}`}
                             className="text-maroon font-medium text-sm hover:underline">
                             Join
                           </Link>

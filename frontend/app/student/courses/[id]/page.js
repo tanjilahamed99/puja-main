@@ -186,7 +186,7 @@ export default function CourseDetailPage({ params }) {
                   You&apos;re enrolled.
                 </div>
                 <Link
-                  href={`/student/courses/${course._id}/live`}
+                  href={`/live/courses/student/${course._id}`}
                   className="inline-flex items-center justify-center bg-maroon text-ivory px-6 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90">
                   Join Class
                 </Link>
