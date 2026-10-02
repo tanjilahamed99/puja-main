@@ -112,6 +112,46 @@ exports.getFreeClassLiveKitToken = asyncHandler(async (req, res) => {
   });
 });
 
+exports.getCourseLiveKitToken = asyncHandler(async (req, res) => {
+  const course = await Course.findOne({ _id: req.params.id, status: "active" });
+  if (!course) {
+    res.status(404);
+    throw new Error("Course not found or not currently available");
+  }
+
+  const enrollment = await Enrollment.findOne({
+    student: req.user._id,
+    course: course._id,
+    status: { $ne: "cancelled" },
+  });
+  if (!enrollment) {
+    res.status(403);
+    throw new Error("You are not enrolled in this course");
+  }
+
+  if (!course.liveKitRoomId) {
+    res.status(400);
+    throw new Error("This course does not have a session room yet");
+  }
+
+  // if (!isWithinJoinWindow(course.schedule)) {
+  //   res.status(403);
+  //   throw new Error("This class is not open to join right now");
+  // }
+
+  const token = await createLiveKitToken({
+    roomName: course.liveKitRoomId,
+    identity: String(req.user._id),
+    name: req.user.name,
+  });
+
+  res.json({
+    token,
+    roomName: course.liveKitRoomId,
+    serverUrl: process.env.LIVEKIT_URL,
+  });
+});
+
 // ---------------- Free classes ----------------
 
 // @route GET /api/student/free-classes — open, upcoming/live sessions

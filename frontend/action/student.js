@@ -58,3 +58,7 @@ export const getFreeClass = (id) => {
 export const getFreeClassLiveKitToken = (id) => {
   return API.get(`/student/free-classes/${id}/livekit-token`);
 };
+
+export const getCourseLiveKitToken = (courseId) => {
+  return API.get(`/student/courses/${courseId}/livekit-token`);
+};

@@ -2,12 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  Eye,
-  Loader2,
-  Users,
-  CalendarDays,
-} from "lucide-react";
+import { Eye, Loader2, Users, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 
 import Topbar from "@/components/admin/Topbar";
@@ -75,8 +70,7 @@ export default function TeacherCoursesPage() {
       console.error("Failed to load courses:", err);
 
       const message =
-        err?.response?.data?.message ||
-        "Failed to load your courses.";
+        err?.response?.data?.message || "Failed to load your courses.";
 
       setError(message);
       toast.error(message);
@@ -109,8 +103,7 @@ export default function TeacherCoursesPage() {
 
               <button
                 onClick={loadCourses}
-                className="mt-4 px-4 py-2 rounded-lg border border-border text-sm hover:bg-surfaceMuted transition"
-              >
+                className="mt-4 px-4 py-2 rounded-lg border border-border text-sm hover:bg-surfaceMuted transition">
                 Try Again
               </button>
             </div>
@@ -125,21 +118,13 @@ export default function TeacherCoursesPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-inkSoft border-b border-border">
-                    <th className="px-5 py-3 font-medium">
-                      Course
-                    </th>
+                    <th className="px-5 py-3 font-medium">Course</th>
 
-                    <th className="px-5 py-3 font-medium">
-                      Students
-                    </th>
+                    <th className="px-5 py-3 font-medium">Students</th>
 
-                    <th className="px-5 py-3 font-medium">
-                      Schedule
-                    </th>
+                    <th className="px-5 py-3 font-medium">Schedule</th>
 
-                    <th className="px-5 py-3 font-medium">
-                      Status
-                    </th>
+                    <th className="px-5 py-3 font-medium">Status</th>
 
                     <th className="px-5 py-3 font-medium" />
                   </tr>
@@ -149,12 +134,9 @@ export default function TeacherCoursesPage() {
                   {courses.map((course) => (
                     <tr
                       key={course._id}
-                      className="border-b border-border last:border-0"
-                    >
+                      className="border-b border-border last:border-0">
                       <td className="px-5 py-3.5">
-                        <div className="font-medium">
-                          {course.title}
-                        </div>
+                        <div className="font-medium">{course.title}</div>
 
                         {course.description && (
                           <div className="text-xs text-inkSoft mt-1 max-w-md truncate">
@@ -187,23 +169,25 @@ export default function TeacherCoursesPage() {
                       </td>
 
                       <td className="px-5 py-3.5">
-                        <Badge
-                          variant={getStatusVariant(
-                            course.status
-                          )}
-                        >
+                        <Badge variant={getStatusVariant(course.status)}>
                           {formatStatus(course.status)}
                         </Badge>
                       </td>
 
                       <td className="px-5 py-3.5 text-right">
-                        <Link
-                          href={`/teacher/courses/${course._id}`}
-                          className="inline-flex items-center gap-1.5 text-maroon font-medium text-sm hover:underline"
-                        >
-                          <Eye size={15} />
-                          View class
-                        </Link>
+                        <div className="flex items-center justify-end gap-4">
+                          <Link
+                            href={`/teacher/courses/${course._id}/live`}
+                            className="text-maroon font-medium text-sm hover:underline">
+                            Join
+                          </Link>
+                          <Link
+                            href={`/teacher/courses/${course._id}`}
+                            className="inline-flex items-center gap-1.5 text-maroon font-medium text-sm hover:underline">
+                            <Eye size={15} />
+                            View class
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}

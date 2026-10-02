@@ -233,3 +233,31 @@ exports.endFreeClassSession = asyncHandler(async (req, res) => {
 
   res.json({ freeClass });
 });
+
+// @route GET /api/teacher/courses/:id/livekit-token
+exports.getCourseLiveKitToken = asyncHandler(async (req, res) => {
+  const course = await Course.findOne({ _id: req.params.id, teacher: req.user._id });
+  if (!course) {
+    res.status(404);
+    throw new Error("Course not found or not assigned to you");
+  }
+
+  if (!course.liveKitRoomId) {
+    res.status(400);
+    throw new Error("This course does not have a session room yet");
+  }
+
+  // if (!isWithinJoinWindow(course.schedule)) {
+  //   res.status(403);
+  //   throw new Error("This class is not open to start right now");
+  // }
+
+  const token = await createLiveKitToken({
+    roomName: course.liveKitRoomId,
+    identity: String(req.user._id),
+    name: req.user.name,
+    roomAdmin: true, // lets the teacher mute/remove participants
+  });
+
+  res.json({ token, roomName: course.liveKitRoomId, serverUrl: process.env.LIVEKIT_URL });
+});

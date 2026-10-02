@@ -43,3 +43,7 @@ export const startFreeClassSession = (freeClassId) =>
 
 export const endFreeClassSession = (freeClassId) =>
   API.post(`/teacher/free-classes/${freeClassId}/end`);
+
+export const getCourseLiveKitToken = (courseId) => {
+  return API.get(`/teacher/courses/${courseId}/livekit-token`);
+};

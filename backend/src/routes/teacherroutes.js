@@ -11,6 +11,7 @@ const {
   markAttendance,
   endFreeClassSession,
   startFreeClassSession,
+  getCourseLiveKitToken,
 } = require("../controllers/teachercontroller");
 
 const router = express.Router();
@@ -30,5 +31,7 @@ router.get("/specific-puja/bookings", getMyPujaBookings);
 router.patch("/specific-puja/bookings/:id/complete", completePujaBooking);
 
 router.get("/schedule/upcoming", getUpcomingSchedule);
+
+router.get("/courses/:id/livekit-token", getCourseLiveKitToken);
 
 module.exports = router;
