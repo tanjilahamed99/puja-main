@@ -9,6 +9,7 @@ import {
   getMyEnrollments,
   enrollInCourse,
 } from "@/action/student";
+import CourseJoinControl from "@/components/CourseJoinControl";
 
 function formatPrice(price) {
   if (price === undefined || price === null) return "—";
@@ -185,11 +186,11 @@ export default function CourseDetailPage({ params }) {
                   <CheckCircle2 size={18} />
                   You&apos;re enrolled.
                 </div>
-                <Link
-                  href={`/live/courses/student/${course._id}`}
-                  className="inline-flex items-center justify-center bg-maroon text-ivory px-6 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90">
-                  Join Class
-                </Link>
+                <CourseJoinControl
+                  courseId={course._id}
+                  schedule={course.schedule}
+                  durationMin={course.schedule?.durationMin || 60}
+                />
               </div>
             ) : (
               <form onSubmit={handleEnroll} className="space-y-4">
