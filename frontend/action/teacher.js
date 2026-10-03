@@ -18,13 +18,12 @@ export const getAttendance = (courseId, params) => {
   return API.get(`/teacher/courses/${courseId}/attendance`, { params });
 };
 
-export const getMyFreeClasses = () => {
-  return API.get("/teacher/free-classes");
-};
+export const getMyFreeClasses = () => API.get("/teacher/free-classes");
 
 export const getUpcomingSchedule = () => {
   return API.get("/teacher/schedule/upcoming");
 };
+
 
 export const getMyPujaBookings = () => {
   return API.get("/teacher/specific-puja/bookings");

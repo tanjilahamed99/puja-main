@@ -8,14 +8,25 @@ import { toast } from "sonner";
 
 import Topbar from "@/components/admin/Topbar";
 import Field from "@/components/admin/Field";
-import { getFreeClass, getTeachers, updateFreeClass } from "@/action/admin";
 import UploadImage from "@/components/UploadImage";
+import { getFreeClass, getTeachers, updateFreeClass } from "@/action/admin";
 
+function formatDateForInput(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatTimeForInput(date) {
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
 
 export default function EditFreeClassPage() {
   const params = useParams();
   const router = useRouter();
-
   const id = params?.id;
 
   const [loading, setLoading] = useState(true);
@@ -32,32 +43,29 @@ export default function EditFreeClassPage() {
     date: "",
     time: "",
     status: "scheduled",
+    durationMinutes: 60,
+    joinLeadMinutes: 5,
+    joinGraceMinutes: 15,
   });
 
   useEffect(() => {
     if (!id) return;
-
     loadData();
   }, [id]);
 
   const loadData = async () => {
     try {
       setLoading(true);
+      const [classResponse, teachersResponse] = await Promise.all([
+        getFreeClass(id),
+        getTeachers(),
+      ]);
 
-      const [classResponse, teachersResponse] =
-        await Promise.all([
-          getFreeClass(id),
-          getTeachers(),
-        ]);
-
-      const freeClass =
-        classResponse.data?.freeClass;
-
+      const freeClass = classResponse.data?.freeClass;
       const teacherList =
         teachersResponse.data?.teachers ||
         teachersResponse.data?.users ||
         [];
-
       setTeachers(teacherList);
 
       if (!freeClass) {
@@ -66,34 +74,25 @@ export default function EditFreeClassPage() {
         return;
       }
 
-      const classDate = freeClass.dateTime
-        ? new Date(freeClass.dateTime)
-        : null;
+      const classDate = freeClass.dateTime ? new Date(freeClass.dateTime) : null;
 
       setForm({
         title: freeClass.title || "",
         description: freeClass.description || "",
         image: freeClass.image || "",
         teacher: freeClass.teacher?._id || "",
-        date: classDate
-          ? formatDateForInput(classDate)
-          : "",
-        time: classDate
-          ? formatTimeForInput(classDate)
-          : "",
+        date: classDate ? formatDateForInput(classDate) : "",
+        time: classDate ? formatTimeForInput(classDate) : "",
         status: freeClass.status || "scheduled",
+        durationMinutes: freeClass.durationMinutes ?? 60,
+        joinLeadMinutes: freeClass.joinLeadMinutes ?? 5,
+        joinGraceMinutes: freeClass.joinGraceMinutes ?? 15,
       });
     } catch (error) {
-      console.error(
-        "Failed to load free class:",
-        error
-      );
-
+      console.error("Failed to load free class:", error);
       toast.error(
-        error?.response?.data?.message ||
-          "Failed to load free class"
+        error?.response?.data?.message || "Failed to load free class"
       );
-
       router.push("/admin/free-classes");
     } finally {
       setLoading(false);
@@ -101,44 +100,13 @@ export default function EditFreeClassPage() {
     }
   };
 
-  const formatDateForInput = (date) => {
-    const year = date.getFullYear();
-    const month = String(
-      date.getMonth() + 1
-    ).padStart(2, "0");
-    const day = String(
-      date.getDate()
-    ).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-  };
-
-  const formatTimeForInput = (date) => {
-    const hours = String(
-      date.getHours()
-    ).padStart(2, "0");
-
-    const minutes = String(
-      date.getMinutes()
-    ).padStart(2, "0");
-
-    return `${hours}:${minutes}`;
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (url) => {
-    setForm((prev) => ({
-      ...prev,
-      image: url,
-    }));
+    setForm((prev) => ({ ...prev, image: url }));
   };
 
   const handleSubmit = async (e) => {
@@ -148,12 +116,10 @@ export default function EditFreeClassPage() {
       toast.error("Please enter a class title");
       return;
     }
-
     if (!form.date) {
       toast.error("Please select a date");
       return;
     }
-
     if (!form.time) {
       toast.error("Please select a time");
       return;
@@ -162,10 +128,7 @@ export default function EditFreeClassPage() {
     try {
       setSaving(true);
 
-      const dateTime = new Date(
-        `${form.date}T${form.time}`
-      );
-
+      const dateTime = new Date(`${form.date}T${form.time}`);
       if (Number.isNaN(dateTime.getTime())) {
         toast.error("Invalid date or time");
         return;
@@ -178,24 +141,18 @@ export default function EditFreeClassPage() {
         teacher: form.teacher || undefined,
         dateTime: dateTime.toISOString(),
         status: form.status,
+        durationMinutes: Number(form.durationMinutes) || 60,
+        joinLeadMinutes: Number(form.joinLeadMinutes) || 0,
+        joinGraceMinutes: Number(form.joinGraceMinutes) || 0,
       };
 
       await updateFreeClass(id, payload);
-
-      toast.success(
-        "Free class updated successfully"
-      );
-
+      toast.success("Free class updated successfully");
       router.push("/admin/free-classes");
     } catch (error) {
-      console.error(
-        "Update free class error:",
-        error
-      );
-
+      console.error("Update free class error:", error);
       toast.error(
-        error?.response?.data?.message ||
-          "Failed to update free class"
+        error?.response?.data?.message || "Failed to update free class"
       );
     } finally {
       setSaving(false);
@@ -205,18 +162,11 @@ export default function EditFreeClassPage() {
   if (loading) {
     return (
       <>
-        <Topbar
-          title="Edit Free Class"
-          subtitle="Update free class details"
-        />
-
+        <Topbar title="Edit Free Class" subtitle="Update free class details" />
         <main className="px-6 lg:px-10 py-8 max-w-2xl">
           <div className="flex items-center justify-center py-20">
             <div className="flex items-center gap-2 text-sm text-inkSoft">
-              <Loader2
-                size={18}
-                className="animate-spin"
-              />
+              <Loader2 size={18} className="animate-spin" />
               Loading free class...
             </div>
           </div>
@@ -227,10 +177,7 @@ export default function EditFreeClassPage() {
 
   return (
     <>
-      <Topbar
-        title="Edit Free Class"
-        subtitle="Update free class details"
-      />
+      <Topbar title="Edit Free Class" subtitle="Update free class details" />
 
       <main className="px-6 lg:px-10 py-8 max-w-2xl">
         <Link
@@ -245,27 +192,23 @@ export default function EditFreeClassPage() {
           onSubmit={handleSubmit}
           className="bg-surface border border-border rounded-xl p-6 space-y-6"
         >
-          {/* Image */}
           <UploadImage
             label="Class image"
             value={form.image}
             onChange={handleImageChange}
           />
 
-          {/* Title */}
           <Field label="Class title">
             <input
               type="text"
               name="title"
               value={form.title}
               onChange={handleChange}
-              placeholder="e.g. Ganesh Puja Basics"
               className="input"
               required
             />
           </Field>
 
-          {/* Description */}
           <Field label="Description">
             <textarea
               name="description"
@@ -273,11 +216,9 @@ export default function EditFreeClassPage() {
               onChange={handleChange}
               rows={4}
               className="input"
-              placeholder="What will this session cover?"
             />
           </Field>
 
-          {/* Teacher */}
           <Field label="Assign teacher">
             <select
               name="teacher"
@@ -287,26 +228,17 @@ export default function EditFreeClassPage() {
               disabled={loadingTeachers}
             >
               <option value="">
-                {loadingTeachers
-                  ? "Loading teachers..."
-                  : "Select a teacher"}
+                {loadingTeachers ? "Loading teachers..." : "Select a teacher"}
               </option>
-
               {teachers.map((teacher) => (
-                <option
-                  key={teacher._id}
-                  value={teacher._id}
-                >
+                <option key={teacher._id} value={teacher._id}>
                   {teacher.name}
-                  {teacher.email
-                    ? ` (${teacher.email})`
-                    : ""}
+                  {teacher.email ? ` (${teacher.email})` : ""}
                 </option>
               ))}
             </select>
           </Field>
 
-          {/* Date / Time */}
           <div className="grid sm:grid-cols-2 gap-6">
             <Field label="Date">
               <input
@@ -318,7 +250,6 @@ export default function EditFreeClassPage() {
                 required
               />
             </Field>
-
             <Field label="Time">
               <input
                 type="time"
@@ -331,7 +262,55 @@ export default function EditFreeClassPage() {
             </Field>
           </div>
 
-          {/* Status */}
+          {/* NEW: session window config */}
+          <div className="pt-2 border-t border-border space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-ink">
+                Join window settings
+              </h3>
+              <p className="text-xs text-inkSoft mt-1">
+                Controls when students can enter the LiveKit room.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-4">
+              <Field label="Duration (min)">
+                <input
+                  type="number"
+                  name="durationMinutes"
+                  value={form.durationMinutes}
+                  onChange={handleChange}
+                  min="5"
+                  max="480"
+                  step="5"
+                  className="input"
+                />
+              </Field>
+              <Field label="Opens before start (min)">
+                <input
+                  type="number"
+                  name="joinLeadMinutes"
+                  value={form.joinLeadMinutes}
+                  onChange={handleChange}
+                  min="0"
+                  max="60"
+                  className="input"
+                />
+              </Field>
+              <Field label="Grace after end (min)">
+                <input
+                  type="number"
+                  name="joinGraceMinutes"
+                  value={form.joinGraceMinutes}
+                  onChange={handleChange}
+                  min="0"
+                  max="120"
+                  className="input"
+                />
+              </Field>
+            </div>
+          </div>
+
           <Field label="Status">
             <select
               name="status"
@@ -339,50 +318,27 @@ export default function EditFreeClassPage() {
               onChange={handleChange}
               className="input"
             >
-              <option value="scheduled">
-                Scheduled
-              </option>
-
-              <option value="live">
-                Live
-              </option>
-
-              <option value="completed">
-                Completed
-              </option>
-
-              <option value="cancelled">
-                Cancelled
-              </option>
+              <option value="scheduled">Scheduled</option>
+              <option value="live">Live</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
             </select>
           </Field>
 
           <p className="text-xs text-inkSoft">
-            Only logged-in registered users will be able
-            to join. Updating the status manually can be
-            useful for managing completed or cancelled
-            sessions.
+            Only logged-in registered users can join. Manually changing status
+            is useful for marking completed or cancelled sessions.
           </p>
 
-          {/* Buttons */}
           <div className="flex items-center gap-3 pt-2">
             <button
               type="submit"
               disabled={saving}
               className="inline-flex items-center justify-center gap-2 bg-maroon text-ivory px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {saving && (
-                <Loader2
-                  size={16}
-                  className="animate-spin"
-                />
-              )}
-
-              {saving
-                ? "Updating..."
-                : "Update Free Class"}
+              {saving && <Loader2 size={16} className="animate-spin" />}
+              {saving ? "Updating..." : "Update Free Class"}
             </button>
-
             <Link
               href="/admin/free-classes"
               className="text-sm text-inkSoft font-medium"

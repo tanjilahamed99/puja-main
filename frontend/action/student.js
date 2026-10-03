@@ -16,17 +16,15 @@ export const getCourseLiveKitToken = (courseId) =>
 
 export const browseFreeClasses = () => API.get("/student/free-classes");
 
-export const getFreeClass = (id) => API.get(`/student/free-classes/${id}`);
-
 export const joinFreeClass = (freeClassId) =>
   API.post(`/student/free-classes/${freeClassId}/join`);
 
 export const donateToFreeClass = (freeClassId, data) =>
   API.post(`/student/free-classes/${freeClassId}/donate`, data);
 
+export const getFreeClass = (id) => API.get(`/student/free-classes/${id}`);
 export const getFreeClassLiveKitToken = (id) =>
   API.get(`/student/free-classes/${id}/livekit-token`);
-
 // ---------------- Specific Puja ----------------
 
 export const browsePujaPackages = () =>

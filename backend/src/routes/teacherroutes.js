@@ -30,6 +30,7 @@ router.get("/free-classes", getMyFreeClasses);
 router.post("/free-classes/:id/start", startFreeClassSession);
 router.post("/free-classes/:id/end", endFreeClassSession);
 
+
 // LIST (plural)
 router.get("/specific-puja/bookings", getMyPujaBookings);
 

@@ -11,6 +11,7 @@ const Certificate = require("../models/Certificate");
 const generateToken = require("../utils/generateToken");
 const { createLiveKitToken } = require("../utils/livekit");
 const { evaluateJoinability } = require("../utils/pujaSession");
+const { evaluateFreeClassJoinability } = require("../utils/freeClassSession");
 
 // ---------------- Courses ----------------
 
@@ -155,35 +156,6 @@ exports.getCourseLiveKitToken = asyncHandler(async (req, res) => {
 
 // ---------------- Free classes ----------------
 
-// @route GET /api/student/free-classes — open, upcoming/live sessions
-exports.browseFreeClasses = asyncHandler(async (req, res) => {
-  const freeClasses = await FreeClass.find({
-    status: { $in: ["scheduled", "live"] },
-  })
-    .populate("teacher", "name")
-    .sort({ dateTime: 1 });
-  res.json({ freeClasses });
-});
-
-// @route POST /api/student/free-classes/:id/join
-exports.joinFreeClass = asyncHandler(async (req, res) => {
-  const freeClass = await FreeClass.findById(req.params.id);
-  if (!freeClass) {
-    res.status(404);
-    throw new Error("Free class not found");
-  }
-
-  const participant = await FreeClassParticipant.create({
-    freeClass: freeClass._id,
-    user: req.user._id,
-  });
-
-  res.status(201).json({
-    participant,
-    liveKitRoomId: freeClass.liveKitRoomId,
-  });
-});
-
 // @route POST /api/student/free-classes/:id/donate
 // body: { amount, method: 'paypal' | 'phonepe', gatewayRef }
 exports.donateToFreeClass = asyncHandler(async (req, res) => {
@@ -210,6 +182,126 @@ exports.donateToFreeClass = asyncHandler(async (req, res) => {
 
   res.status(201).json({ donation });
 });
+
+// @route GET /api/student/free-classes
+exports.browseFreeClasses = asyncHandler(async (req, res) => {
+  const freeClasses = await FreeClass.find({
+    status: { $in: ["scheduled", "live"] },
+  })
+    .populate("teacher", "name")
+    .sort({ dateTime: 1 });
+
+  const enriched = freeClasses.map((fc) => {
+    const j = evaluateFreeClassJoinability(fc);
+    return {
+      ...fc.toObject(),
+      joinability: {
+        canJoin: j.canJoin,
+        reason: j.reason || null,
+        opensAt: j.opensAt,
+        closesAt: j.closesAt,
+      },
+    };
+  });
+
+  res.json({ freeClasses: enriched });
+});
+
+// @route GET /api/student/free-classes/:id
+exports.getFreeClass = asyncHandler(async (req, res) => {
+  const fc = await FreeClass.findById(req.params.id).populate("teacher", "name");
+  if (!fc) {
+    res.status(404);
+    throw new Error("Free class not found");
+  }
+
+  const j = evaluateFreeClassJoinability(fc);
+
+  res.json({
+    freeClass: fc,
+    joinability: {
+      canJoin: j.canJoin,
+      reason: j.reason || null,
+      opensAt: j.opensAt,
+      closesAt: j.closesAt,
+    },
+  });
+});
+
+// @route POST /api/student/free-classes/:id/join
+// Records (or updates) this user's participation. Idempotent on rejoin.
+exports.joinFreeClass = asyncHandler(async (req, res) => {
+  const freeClass = await FreeClass.findById(req.params.id);
+  if (!freeClass) {
+    res.status(404);
+    throw new Error("Free class not found");
+  }
+
+  const j = evaluateFreeClassJoinability(freeClass);
+  if (!j.canJoin) {
+    res.status(403);
+    throw new Error(j.reason || "The class is not open yet");
+  }
+
+  const participant = await FreeClassParticipant.findOneAndUpdate(
+    { freeClass: freeClass._id, user: req.user._id },
+    {
+      $set: { lastJoinedAt: new Date(), leftAt: null },
+      $inc: { joinCount: 1 },
+      $setOnInsert: { joinedAt: new Date() },
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  );
+
+  res.status(201).json({
+    participant,
+    liveKitRoomId: freeClass.liveKitRoomId,
+  });
+});
+
+// @route GET /api/student/free-classes/:id/livekit-token
+exports.getFreeClassLiveKitToken = asyncHandler(async (req, res) => {
+  const freeClass = await FreeClass.findById(req.params.id);
+  if (!freeClass) {
+    res.status(404);
+    throw new Error("Free class not found");
+  }
+
+  const j = evaluateFreeClassJoinability(freeClass);
+  if (!j.canJoin) {
+    res.status(403);
+    throw new Error(j.reason || "The class is not open yet");
+  }
+
+  // Ensure a participant record exists — so a user can't join without
+  // appearing in the admin's attendance list.
+  await FreeClassParticipant.findOneAndUpdate(
+    { freeClass: freeClass._id, user: req.user._id },
+    {
+      $set: { lastJoinedAt: new Date(), leftAt: null },
+      $inc: { joinCount: 1 },
+      $setOnInsert: { joinedAt: new Date() },
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  );
+
+  const token = await createLiveKitToken({
+    roomName: freeClass.liveKitRoomId,
+    identity: String(req.user._id),
+    name: req.user.name,
+    roomAdmin: false,
+  });
+
+  res.json({
+    token,
+    roomName: freeClass.liveKitRoomId,
+    serverUrl: process.env.LIVEKIT_URL,
+    opensAt: j.opensAt,
+    closesAt: j.closesAt,
+  });
+});
+
+
 
 // ---------------- Specific puja ----------------
 

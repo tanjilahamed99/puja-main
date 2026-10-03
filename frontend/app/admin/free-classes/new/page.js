@@ -5,12 +5,11 @@ import Link from "next/link";
 import { ChevronLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
 import { createFreeClass, getTeachers } from "@/action/admin";
 import Topbar from "@/components/admin/Topbar";
 import UploadImage from "@/components/UploadImage";
 import Field from "@/components/admin/Field";
-
-
 
 export default function NewFreeClassPage() {
   const router = useRouter();
@@ -26,6 +25,9 @@ export default function NewFreeClassPage() {
     teacher: "",
     date: "",
     time: "",
+    durationMinutes: 60,
+    joinLeadMinutes: 5,
+    joinGraceMinutes: 15,
   });
 
   useEffect(() => {
@@ -35,16 +37,12 @@ export default function NewFreeClassPage() {
   const loadTeachers = async () => {
     try {
       setLoadingTeachers(true);
-
       const res = await getTeachers();
-
       setTeachers(res.data?.users || res.data?.teachers || []);
     } catch (error) {
       console.error("Failed to load teachers:", error);
-
       toast.error(
-        error?.response?.data?.message ||
-          "Failed to load teachers"
+        error?.response?.data?.message || "Failed to load teachers"
       );
     } finally {
       setLoadingTeachers(false);
@@ -53,18 +51,11 @@ export default function NewFreeClassPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (url) => {
-    setForm((prev) => ({
-      ...prev,
-      image: url,
-    }));
+    setForm((prev) => ({ ...prev, image: url }));
   };
 
   const handleSubmit = async (e) => {
@@ -74,12 +65,10 @@ export default function NewFreeClassPage() {
       toast.error("Please enter a class title");
       return;
     }
-
     if (!form.date) {
       toast.error("Please select a date");
       return;
     }
-
     if (!form.time) {
       toast.error("Please select a time");
       return;
@@ -88,19 +77,7 @@ export default function NewFreeClassPage() {
     try {
       setSaving(true);
 
-      /*
-       * Convert date + time into a proper ISO date.
-       *
-       * Example:
-       * date = 2026-09-30
-       * time = 19:00
-       *
-       * => 2026-09-30T19:00:00
-       */
-      const dateTime = new Date(
-        `${form.date}T${form.time}`
-      );
-
+      const dateTime = new Date(`${form.date}T${form.time}`);
       if (Number.isNaN(dateTime.getTime())) {
         toast.error("Invalid date or time");
         return;
@@ -112,19 +89,18 @@ export default function NewFreeClassPage() {
         image: form.image,
         teacher: form.teacher || undefined,
         dateTime: dateTime.toISOString(),
+        durationMinutes: Number(form.durationMinutes) || 60,
+        joinLeadMinutes: Number(form.joinLeadMinutes) || 0,
+        joinGraceMinutes: Number(form.joinGraceMinutes) || 0,
       };
 
       await createFreeClass(payload);
-
       toast.success("Free class created successfully");
-
       router.push("/admin/free-classes");
     } catch (error) {
       console.error("Create free class error:", error);
-
       toast.error(
-        error?.response?.data?.message ||
-          "Failed to create free class"
+        error?.response?.data?.message || "Failed to create free class"
       );
     } finally {
       setSaving(false);
@@ -133,10 +109,7 @@ export default function NewFreeClassPage() {
 
   return (
     <>
-      <Topbar
-        title="Add Free Class"
-        subtitle="Schedule a new open session"
-      />
+      <Topbar title="Add Free Class" subtitle="Schedule a new open session" />
 
       <main className="px-6 lg:px-10 py-8 max-w-2xl">
         <Link
@@ -151,14 +124,12 @@ export default function NewFreeClassPage() {
           onSubmit={handleSubmit}
           className="bg-surface border border-border rounded-xl p-6 space-y-6"
         >
-          {/* Image */}
           <UploadImage
             label="Class image"
             value={form.image}
             onChange={handleImageChange}
           />
 
-          {/* Title */}
           <Field label="Class title">
             <input
               type="text"
@@ -171,7 +142,6 @@ export default function NewFreeClassPage() {
             />
           </Field>
 
-          {/* Description */}
           <Field label="Description">
             <textarea
               name="description"
@@ -183,7 +153,6 @@ export default function NewFreeClassPage() {
             />
           </Field>
 
-          {/* Teacher */}
           <Field label="Assign teacher">
             <select
               name="teacher"
@@ -193,26 +162,17 @@ export default function NewFreeClassPage() {
               disabled={loadingTeachers}
             >
               <option value="">
-                {loadingTeachers
-                  ? "Loading teachers..."
-                  : "Select a teacher"}
+                {loadingTeachers ? "Loading teachers..." : "Select a teacher"}
               </option>
-
               {teachers.map((teacher) => (
-                <option
-                  key={teacher._id}
-                  value={teacher._id}
-                >
+                <option key={teacher._id} value={teacher._id}>
                   {teacher.name}
-                  {teacher.email
-                    ? ` (${teacher.email})`
-                    : ""}
+                  {teacher.email ? ` (${teacher.email})` : ""}
                 </option>
               ))}
             </select>
           </Field>
 
-          {/* Date / Time */}
           <div className="grid sm:grid-cols-2 gap-6">
             <Field label="Date">
               <input
@@ -224,7 +184,6 @@ export default function NewFreeClassPage() {
                 required
               />
             </Field>
-
             <Field label="Time">
               <input
                 type="time"
@@ -237,31 +196,73 @@ export default function NewFreeClassPage() {
             </Field>
           </div>
 
+          {/* NEW: session window config */}
+          <div className="pt-2 border-t border-border space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-ink">
+                Join window settings
+              </h3>
+              <p className="text-xs text-inkSoft mt-1">
+                Controls when students can enter the LiveKit room.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-4">
+              <Field label="Duration (min)">
+                <input
+                  type="number"
+                  name="durationMinutes"
+                  value={form.durationMinutes}
+                  onChange={handleChange}
+                  min="5"
+                  max="480"
+                  step="5"
+                  className="input"
+                  placeholder="60"
+                />
+              </Field>
+              <Field label="Opens before start (min)">
+                <input
+                  type="number"
+                  name="joinLeadMinutes"
+                  value={form.joinLeadMinutes}
+                  onChange={handleChange}
+                  min="0"
+                  max="60"
+                  className="input"
+                  placeholder="5"
+                />
+              </Field>
+              <Field label="Grace after end (min)">
+                <input
+                  type="number"
+                  name="joinGraceMinutes"
+                  value={form.joinGraceMinutes}
+                  onChange={handleChange}
+                  min="0"
+                  max="120"
+                  className="input"
+                  placeholder="15"
+                />
+              </Field>
+            </div>
+          </div>
+
           <p className="text-xs text-inkSoft">
-            Only logged-in registered users will be able to join —
-            guests are not permitted. A donation prompt is shown
-            automatically at the end of the session.
+            Only logged-in registered users will be able to join — guests are
+            not permitted. A donation prompt is shown at the end of the
+            session.
           </p>
 
-          {/* Buttons */}
           <div className="flex items-center gap-3 pt-2">
             <button
               type="submit"
               disabled={saving}
               className="inline-flex items-center justify-center gap-2 bg-maroon text-ivory px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {saving && (
-                <Loader2
-                  size={16}
-                  className="animate-spin"
-                />
-              )}
-
-              {saving
-                ? "Saving..."
-                : "Save Free Class"}
+              {saving && <Loader2 size={16} className="animate-spin" />}
+              {saving ? "Saving..." : "Save Free Class"}
             </button>
-
             <Link
               href="/admin/free-classes"
               className="text-sm text-inkSoft font-medium"

@@ -6,6 +6,8 @@ const Attendance = require("../models/Attendance");
 const FreeClass = require("../models/FreeClass");
 const SpecificPujaPackage = require("../models/SpecificPujaPackage");
 const SpecificPujaBooking = require("../models/SpecificPujaBooking");
+const { evaluateFreeClassJoinability } = require("../utils/freeClassSession");
+
 const { evaluateJoinability } = require("../utils/pujaSession");
 
 /* ------------------------------ Courses ------------------------------ */
@@ -140,7 +142,21 @@ exports.getMyFreeClasses = asyncHandler(async (req, res) => {
   const freeClasses = await FreeClass.find({ teacher: req.user._id }).sort({
     dateTime: -1,
   });
-  res.json({ freeClasses });
+
+  const enriched = freeClasses.map((fc) => {
+    const j = evaluateFreeClassJoinability(fc);
+    return {
+      ...fc.toObject(),
+      joinability: {
+        canJoin: j.canJoin,
+        reason: j.reason || null,
+        opensAt: j.opensAt,
+        closesAt: j.closesAt,
+      },
+    };
+  });
+
+  res.json({ freeClasses: enriched });
 });
 
 // @route POST /api/teacher/free-classes/:id/start
@@ -149,16 +165,15 @@ exports.startFreeClassSession = asyncHandler(async (req, res) => {
     _id: req.params.id,
     teacher: req.user._id,
   });
+
   if (!freeClass) {
     res.status(404);
     throw new Error("Free class not found or not assigned to you");
   }
-
   if (!freeClass.liveKitRoomId) {
     res.status(400);
     throw new Error("This class does not have a session room yet");
   }
-
   if (freeClass.status === "completed" || freeClass.status === "cancelled") {
     res.status(400);
     throw new Error(
@@ -166,10 +181,15 @@ exports.startFreeClassSession = asyncHandler(async (req, res) => {
     );
   }
 
-  if (freeClass.status !== "live") {
-    freeClass.status = "live";
-    await freeClass.save();
+  const j = evaluateFreeClassJoinability(freeClass);
+  if (!j.canJoin) {
+    res.status(403);
+    throw new Error(j.reason || "The class is not open yet");
   }
+
+  if (freeClass.status !== "live") freeClass.status = "live";
+  if (!freeClass.startedAt) freeClass.startedAt = new Date();
+  await freeClass.save();
 
   const token = await createLiveKitToken({
     roomName: freeClass.liveKitRoomId,
@@ -182,6 +202,8 @@ exports.startFreeClassSession = asyncHandler(async (req, res) => {
     token,
     roomName: freeClass.liveKitRoomId,
     serverUrl: process.env.LIVEKIT_URL,
+    opensAt: j.opensAt,
+    closesAt: j.closesAt,
     freeClass,
   });
 });
@@ -198,6 +220,7 @@ exports.endFreeClassSession = asyncHandler(async (req, res) => {
   }
 
   freeClass.status = "completed";
+  freeClass.endedAt = new Date();
   await freeClass.save();
 
   res.json({ freeClass });
@@ -249,8 +272,7 @@ exports.getMyPujaBooking = asyncHandler(async (req, res) => {
     throw new Error("Booking not found");
   }
 
-  const teacherId =
-    booking.package?.teacher?._id || booking.package?.teacher;
+  const teacherId = booking.package?.teacher?._id || booking.package?.teacher;
 
   if (!teacherId || String(teacherId) !== String(req.user._id)) {
     res.status(403);
@@ -282,8 +304,7 @@ exports.getPujaBookingLiveKitToken = asyncHandler(async (req, res) => {
     throw new Error("Booking not found");
   }
 
-  const teacherId =
-    booking.package?.teacher?._id || booking.package?.teacher;
+  const teacherId = booking.package?.teacher?._id || booking.package?.teacher;
 
   if (!teacherId || String(teacherId) !== String(req.user._id)) {
     res.status(403);
@@ -324,8 +345,7 @@ exports.startPujaBooking = asyncHandler(async (req, res) => {
     throw new Error("Booking not found");
   }
 
-  const teacherId =
-    booking.package?.teacher?._id || booking.package?.teacher;
+  const teacherId = booking.package?.teacher?._id || booking.package?.teacher;
 
   if (!teacherId || String(teacherId) !== String(req.user._id)) {
     res.status(403);
@@ -363,8 +383,7 @@ exports.completePujaBooking = asyncHandler(async (req, res) => {
     throw new Error("Booking not found");
   }
 
-  const teacherId =
-    booking.package?.teacher?._id || booking.package?.teacher;
+  const teacherId = booking.package?.teacher?._id || booking.package?.teacher;
 
   if (!teacherId || String(teacherId) !== String(req.user._id)) {
     res.status(403);

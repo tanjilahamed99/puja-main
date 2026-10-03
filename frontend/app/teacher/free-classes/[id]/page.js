@@ -3,17 +3,24 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, CalendarDays, Video, Loader2 } from "lucide-react";
+import {
+  ChevronLeft,
+  CalendarDays,
+  Video,
+  Loader2,
+  Clock3,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import Topbar from "@/components/admin/Topbar";
 import Badge from "@/components/admin/Badge";
+import JoinPujaButton from "@/components/JoinPujaButton";
 
-import { getMyFreeClasses } from "@/action/teacher";
+import { getMyFreeClasses, startFreeClassSession } from "@/action/teacher";
 
 function formatDateTime(date) {
   if (!date) return "—";
-
   return new Date(date).toLocaleString("en-IN", {
     timeZone: "Asia/Dhaka",
     weekday: "long",
@@ -48,7 +55,6 @@ function formatStatus(status) {
 export default function TeacherFreeClassDetailPage() {
   const params = useParams();
   const router = useRouter();
-
   const classId = params?.id;
 
   const [freeClass, setFreeClass] = useState(null);
@@ -64,30 +70,25 @@ export default function TeacherFreeClassDetailPage() {
     try {
       setLoading(true);
       setError("");
-
       const response = await getMyFreeClasses();
       const classes = response?.data?.freeClasses || [];
-      const foundClass = classes.find((item) => String(item._id) === String(classId));
+      const found = classes.find((item) => String(item._id) === String(classId));
 
-      if (!foundClass) {
+      if (!found) {
         setError("Free class not found or not assigned to you.");
         setFreeClass(null);
         return;
       }
-
-      setFreeClass(foundClass);
+      setFreeClass(found);
     } catch (err) {
       console.error("Failed to load free class:", err);
-      const message = err?.response?.data?.message || "Failed to load free class.";
+      const message =
+        err?.response?.data?.message || "Failed to load free class.";
       setError(message);
       toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
-
-  const goLive = () => {
-    router.push(`/live/teacher/${classId}`);
   };
 
   if (loading) {
@@ -123,10 +124,8 @@ export default function TeacherFreeClassDetailPage() {
     );
   }
 
-  // A teacher can start a scheduled class (which flips it live), or
-  // rejoin one that's already live. Completed/cancelled classes get no
-  // live-session button at all.
-  const canGoLive = freeClass.status === "scheduled" || freeClass.status === "live";
+  const canGoLive =
+    freeClass.status === "scheduled" || freeClass.status === "live";
 
   return (
     <>
@@ -141,13 +140,60 @@ export default function TeacherFreeClassDetailPage() {
           Back to free classes
         </Link>
 
+        {/* Live Session Card (only when ready) */}
+        {canGoLive && freeClass.liveKitRoomId && freeClass.joinability && (
+          <div className="bg-surface border border-border rounded-xl p-6 mb-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-maroon/10">
+                  <Video size={18} className="text-maroon" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-ink">
+                    Live Class Session
+                  </p>
+                  <p className="text-xs text-inkSoft mt-1">
+                    Joining opens {freeClass.joinLeadMinutes ?? 5} min before
+                    start.
+                  </p>
+                  {!freeClass.joinability.canJoin &&
+                    freeClass.joinability.reason && (
+                      <p className="text-xs text-inkSoft mt-1">
+                        {freeClass.joinability.reason}
+                      </p>
+                    )}
+                </div>
+              </div>
+
+              <JoinPujaButton
+                bookingId={freeClass._id}
+                opensAt={freeClass.joinability.opensAt}
+                closesAt={freeClass.joinability.closesAt}
+                canJoin={freeClass.joinability.canJoin}
+                joinPath={`/live/free-class/teacher/${freeClass._id}`}
+                fetchToken={() => startFreeClassSession(freeClass._id)}
+                label={
+                  freeClass.status === "live" ? "Rejoin Class" : "Start Class"
+                }
+                size="lg"
+              />
+            </div>
+          </div>
+        )}
+
         <div className="bg-surface border border-border rounded-xl p-6 space-y-6">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <h1 className="font-display text-xl font-semibold">{freeClass.title}</h1>
-              <p className="text-sm text-inkSoft mt-2">Free class assigned to you by the admin.</p>
+              <h1 className="font-display text-xl font-semibold">
+                {freeClass.title}
+              </h1>
+              <p className="text-sm text-inkSoft mt-2">
+                Free class assigned to you by the admin.
+              </p>
             </div>
-            <Badge variant={getStatusVariant(freeClass.status)}>{formatStatus(freeClass.status)}</Badge>
+            <Badge variant={getStatusVariant(freeClass.status)}>
+              {formatStatus(freeClass.status)}
+            </Badge>
           </div>
 
           {freeClass.description && (
@@ -159,15 +205,31 @@ export default function TeacherFreeClassDetailPage() {
             </div>
           )}
 
-          <div className="border-t border-border pt-5">
+          <div className="border-t border-border pt-5 grid sm:grid-cols-2 gap-5">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 text-maroon">
                 <CalendarDays size={18} />
               </div>
               <div>
                 <p className="font-medium text-sm">Date & Time</p>
-                <p className="text-sm text-inkSoft mt-1">{formatDateTime(freeClass.dateTime)}</p>
+                <p className="text-sm text-inkSoft mt-1">
+                  {formatDateTime(freeClass.dateTime)}
+                </p>
                 <p className="text-xs text-inkSoft mt-1">Asia/Dhaka</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 text-maroon">
+                <Clock3 size={18} />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Duration</p>
+                <p className="text-sm text-inkSoft mt-1">
+                  {freeClass.durationMinutes
+                    ? `${freeClass.durationMinutes} minutes`
+                    : "—"}
+                </p>
               </div>
             </div>
           </div>
@@ -175,52 +237,27 @@ export default function TeacherFreeClassDetailPage() {
           <div className="border-t border-border pt-5">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 text-maroon">
-                <Video size={18} />
+                <Users size={18} />
               </div>
               <div>
-                <p className="font-medium text-sm">Live Class</p>
-                {freeClass.liveKitRoomId ? (
-                  <>
-                    <p className="text-sm text-success mt-1">LiveKit room is configured.</p>
-                    <p className="text-xs text-inkSoft mt-1 break-all">
-                      Room: {freeClass.liveKitRoomId}
+                <p className="font-medium text-sm">Class Information</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
+                  <div className="bg-ivorySoft rounded-lg p-4">
+                    <p className="text-xs text-inkSoft">Status</p>
+                    <p className="text-sm font-medium mt-1">
+                      {formatStatus(freeClass.status)}
                     </p>
-                  </>
-                ) : (
-                  <p className="text-sm text-inkSoft mt-1">
-                    LiveKit room has not been configured yet.
-                  </p>
-                )}
+                  </div>
+                  <div className="bg-ivorySoft rounded-lg p-4">
+                    <p className="text-xs text-inkSoft">Created</p>
+                    <p className="text-sm font-medium mt-1">
+                      {formatDateTime(freeClass.createdAt)}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-
-          <div className="border-t border-border pt-5">
-            <h3 className="font-medium text-sm mb-3">Class Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-ivorySoft rounded-lg p-4">
-                <p className="text-xs text-inkSoft">Status</p>
-                <p className="text-sm font-medium mt-1">{formatStatus(freeClass.status)}</p>
-              </div>
-              <div className="bg-ivorySoft rounded-lg p-4">
-                <p className="text-xs text-inkSoft">Created</p>
-                <p className="text-sm font-medium mt-1">{formatDateTime(freeClass.createdAt)}</p>
-              </div>
-            </div>
-          </div>
-
-          {canGoLive && freeClass.liveKitRoomId && (
-            <div className="border-t border-border pt-5">
-              <button
-                type="button"
-                onClick={goLive}
-                className="bg-maroon text-ivory px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center gap-2"
-              >
-                <Video size={16} />
-                {freeClass.status === "live" ? "Rejoin Live Class" : "Start Live Class"}
-              </button>
-            </div>
-          )}
         </div>
       </main>
     </>
