@@ -7,10 +7,8 @@ const FreeClass = require("../models/FreeClass");
 const SpecificPujaPackage = require("../models/SpecificPujaPackage");
 const SpecificPujaBooking = require("../models/SpecificPujaBooking");
 const { evaluateFreeClassJoinability } = require("../utils/freeClassSession");
-
 const { evaluateJoinability } = require("../utils/pujaSession");
-
-/* ------------------------------ Courses ------------------------------ */
+const { evaluateCourseJoinability } = require("../utils/courseSession");
 
 // @route GET /api/teacher/courses
 exports.getMyCourses = asyncHandler(async (req, res) => {
@@ -18,17 +16,30 @@ exports.getMyCourses = asyncHandler(async (req, res) => {
     createdAt: -1,
   });
 
-  const withCounts = await Promise.all(
+  const enriched = await Promise.all(
     courses.map(async (course) => {
       const studentCount = await Enrollment.countDocuments({
         course: course._id,
         status: { $ne: "cancelled" },
       });
-      return { ...course.toObject(), studentCount };
+
+      const j = evaluateCourseJoinability(course);
+
+      return {
+        ...course.toObject(),
+        studentCount,
+        joinability: {
+          canJoin: j.canJoin,
+          reason: j.reason || null,
+          opensAt: j.opensAt,
+          closesAt: j.closesAt,
+          nextStart: j.nextStart || null,
+        },
+      };
     }),
   );
 
-  res.json({ courses: withCounts });
+  res.json({ courses: enriched });
 });
 
 // @route GET /api/teacher/courses/:id/enrollments
@@ -50,6 +61,40 @@ exports.getCourseEnrollments = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 });
 
   res.json({ enrollments });
+});
+
+// @route GET /api/teacher/courses/:id/livekit-token
+exports.getCourseLiveKitToken = asyncHandler(async (req, res) => {
+  const course = await Course.findOne({
+    _id: req.params.id,
+    teacher: req.user._id,
+  });
+  if (!course) {
+    res.status(404);
+    throw new Error("Course not found or not assigned to you");
+  }
+
+  const j = evaluateCourseJoinability(course);
+  if (!j.canJoin) {
+    res.status(403);
+    throw new Error(j.reason || "The class is not open right now");
+  }
+
+  const token = await createLiveKitToken({
+    roomName: course.liveKitRoomId,
+    identity: String(req.user._id),
+    name: req.user.name,
+    roomAdmin: true,
+  });
+
+  res.json({
+    token,
+    roomName: course.liveKitRoomId,
+    serverUrl: process.env.LIVEKIT_URL,
+    opensAt: j.opensAt,
+    closesAt: j.closesAt,
+    nextStart: j.nextStart,
+  });
 });
 
 // @route POST /api/teacher/courses/:id/attendance

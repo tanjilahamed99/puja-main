@@ -25,11 +25,11 @@ router.get("/courses", getMyCourses);
 router.get("/courses/:id/enrollments", getCourseEnrollments);
 router.post("/courses/:id/attendance", markAttendance);
 router.get("/courses/:id/attendance", getAttendance);
+router.get("/courses/:id/livekit-token", getCourseLiveKitToken);
 
 router.get("/free-classes", getMyFreeClasses);
 router.post("/free-classes/:id/start", startFreeClassSession);
 router.post("/free-classes/:id/end", endFreeClassSession);
-
 
 // LIST (plural)
 router.get("/specific-puja/bookings", getMyPujaBookings);

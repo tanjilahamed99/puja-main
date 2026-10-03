@@ -1,29 +1,20 @@
 import API from "@/config/axios";
 
-export const getMyCourses = () => {
-  return API.get("/teacher/courses");
-};
-
-export const getCourseEnrollments = (courseId) => {
-  return API.get(`/teacher/courses/${courseId}/enrollments`);
-};
-
-export const markAttendance = (courseId, data) => {
-  // data: { date, records: [{ student, status }] }
-  return API.post(`/teacher/courses/${courseId}/attendance`, data);
-};
-
-export const getAttendance = (courseId, params) => {
-  // params: { date } (optional)
-  return API.get(`/teacher/courses/${courseId}/attendance`, { params });
-};
+export const getMyCourses = () => API.get("/teacher/courses");
+export const getCourseLiveKitToken = (id) =>
+  API.get(`/teacher/courses/${id}/livekit-token`);
+export const getCourseEnrollments = (id) =>
+  API.get(`/teacher/courses/${id}/enrollments`);
+export const markAttendance = (id, data) =>
+  API.post(`/teacher/courses/${id}/attendance`, data);
+export const getAttendance = (id, params) =>
+  API.get(`/teacher/courses/${id}/attendance`, { params });
 
 export const getMyFreeClasses = () => API.get("/teacher/free-classes");
 
 export const getUpcomingSchedule = () => {
   return API.get("/teacher/schedule/upcoming");
 };
-
 
 export const getMyPujaBookings = () => {
   return API.get("/teacher/specific-puja/bookings");
@@ -43,9 +34,6 @@ export const startFreeClassSession = (freeClassId) =>
 export const endFreeClassSession = (freeClassId) =>
   API.post(`/teacher/free-classes/${freeClassId}/end`);
 
-export const getCourseLiveKitToken = (courseId) => {
-  return API.get(`/teacher/courses/${courseId}/livekit-token`);
-};
 export const getPujaBookingLiveKitToken = (bookingId) =>
   API.get(`/teacher/specific-puja/bookings/${bookingId}/livekit-token`);
 

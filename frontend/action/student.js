@@ -3,14 +3,12 @@ import API from "@/config/axios";
 // ---------------- Courses ----------------
 
 export const browseCourses = () => API.get("/student/courses");
-
-export const enrollInCourse = (courseId, data) =>
-  API.post(`/student/courses/${courseId}/enroll`, data);
-
+export const getMyCourse = (id) => API.get(`/student/courses/${id}`);
+export const enrollInCourse = (id, data) =>
+  API.post(`/student/courses/${id}/enroll`, data);
+export const getCourseLiveKitToken = (id) =>
+  API.get(`/student/courses/${id}/livekit-token`);
 export const getMyEnrollments = () => API.get("/student/enrollments");
-
-export const getCourseLiveKitToken = (courseId) =>
-  API.get(`/student/courses/${courseId}/livekit-token`);
 
 // ---------------- Free Classes ----------------
 

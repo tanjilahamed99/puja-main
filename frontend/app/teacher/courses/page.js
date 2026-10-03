@@ -8,44 +8,27 @@ import { toast } from "sonner";
 import Topbar from "@/components/admin/Topbar";
 import PageHeader from "@/components/admin/PageHeader";
 import Badge from "@/components/admin/Badge";
-
-import { getMyCourses } from "@/action/teacher";
+import JoinPujaButton from "@/components/JoinPujaButton";
+import { getMyCourses, getCourseLiveKitToken } from "@/action/teacher";
 
 function formatDays(days) {
   if (!days) return "Schedule not set";
-
-  if (Array.isArray(days)) {
-    return days.join(", ");
-  }
-
-  return String(days);
-}
-
-function formatTime(time) {
-  if (!time) return "";
-
-  return time;
+  return Array.isArray(days) ? days.join(", ") : String(days);
 }
 
 function getStatusVariant(status) {
   switch (status) {
     case "active":
       return "success";
-
-    case "draft":
-      return "neutral";
-
     case "archived":
       return "warning";
-
     default:
       return "neutral";
   }
 }
 
 function formatStatus(status) {
-  if (!status) return "Unknown";
-
+  if (!status) return "Draft";
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
@@ -62,16 +45,12 @@ export default function TeacherCoursesPage() {
     try {
       setLoading(true);
       setError("");
-
       const response = await getMyCourses();
-
       setCourses(response?.data?.courses || []);
     } catch (err) {
       console.error("Failed to load courses:", err);
-
       const message =
         err?.response?.data?.message || "Failed to load your courses.";
-
       setError(message);
       toast.error(message);
     } finally {
@@ -100,10 +79,10 @@ export default function TeacherCoursesPage() {
           ) : error ? (
             <div className="py-16 text-center">
               <p className="text-sm text-danger">{error}</p>
-
               <button
                 onClick={loadCourses}
-                className="mt-4 px-4 py-2 rounded-lg border border-border text-sm hover:bg-surfaceMuted transition">
+                className="mt-4 px-4 py-2 rounded-lg border border-border text-sm hover:bg-surfaceMuted transition"
+              >
                 Try Again
               </button>
             </div>
@@ -119,78 +98,84 @@ export default function TeacherCoursesPage() {
                 <thead>
                   <tr className="text-left text-inkSoft border-b border-border">
                     <th className="px-5 py-3 font-medium">Course</th>
-
                     <th className="px-5 py-3 font-medium">Students</th>
-
                     <th className="px-5 py-3 font-medium">Schedule</th>
-
                     <th className="px-5 py-3 font-medium">Status</th>
-
-                    <th className="px-5 py-3 font-medium" />
+                    <th className="px-5 py-3 font-medium">Live</th>
+                    <th className="px-5 py-3 font-medium text-right">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
-
                 <tbody>
-                  {courses.map((course) => (
-                    <tr
-                      key={course._id}
-                      className="border-b border-border last:border-0">
-                      <td className="px-5 py-3.5">
-                        <div className="font-medium">{course.title}</div>
+                  {courses.map((course) => {
+                    const joinability = course.joinability;
+                    const canShowJoin =
+                      course.status === "active" &&
+                      course.liveKitRoomId &&
+                      joinability;
 
-                        {course.description && (
-                          <div className="text-xs text-inkSoft mt-1 max-w-md truncate">
-                            {course.description}
-                          </div>
-                        )}
-                      </td>
-
-                      <td className="px-5 py-3.5 text-inkSoft whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1.5">
-                          <Users size={14} />
-
-                          {course.studentCount || 0}
-                        </span>
-                      </td>
-
-                      <td className="px-5 py-3.5 text-inkSoft whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1.5">
-                          <CalendarDays size={14} />
-
-                          {formatDays(course.days)}
-
-                          {course.time && (
-                            <>
-                              {" · "}
-                              {formatTime(course.time)}
-                            </>
+                    return (
+                      <tr
+                        key={course._id}
+                        className="border-b border-border last:border-0"
+                      >
+                        <td className="px-5 py-3.5">
+                          <div className="font-medium">{course.title}</div>
+                          {course.description && (
+                            <div className="text-xs text-inkSoft mt-1 max-w-md truncate">
+                              {course.description}
+                            </div>
                           )}
-                        </span>
-                      </td>
-
-                      <td className="px-5 py-3.5">
-                        <Badge variant={getStatusVariant(course.status)}>
-                          {formatStatus(course.status)}
-                        </Badge>
-                      </td>
-
-                      <td className="px-5 py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-4">
-                          <Link
-                            href={`/live/courses/teacher/${course._id}`}
-                            className="text-maroon font-medium text-sm hover:underline">
-                            Join
-                          </Link>
+                        </td>
+                        <td className="px-5 py-3.5 text-inkSoft whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Users size={14} />
+                            {course.studentCount || 0}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 text-inkSoft whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1.5">
+                            <CalendarDays size={14} />
+                            {formatDays(course.schedule?.days)}
+                            {course.schedule?.time && (
+                              <> · {course.schedule.time}</>
+                            )}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <Badge variant={getStatusVariant(course.status)}>
+                            {formatStatus(course.status)}
+                          </Badge>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          {canShowJoin ? (
+                            <JoinPujaButton
+                              bookingId={course._id}
+                              opensAt={joinability.opensAt}
+                              closesAt={joinability.closesAt}
+                              canJoin={joinability.canJoin}
+                              joinPath={`/live/course/teacher/${course._id}`}
+                              fetchToken={getCourseLiveKitToken}
+                              label="Start Class"
+                              size="sm"
+                            />
+                          ) : (
+                            <span className="text-xs text-inkSoft">—</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
                           <Link
                             href={`/teacher/courses/${course._id}`}
-                            className="inline-flex items-center gap-1.5 text-maroon font-medium text-sm hover:underline">
+                            className="inline-flex items-center gap-1.5 text-maroon font-medium text-sm hover:underline"
+                          >
                             <Eye size={15} />
-                            View class
+                            View
                           </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

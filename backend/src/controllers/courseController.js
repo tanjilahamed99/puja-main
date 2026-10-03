@@ -3,6 +3,9 @@ const makeRoomId = require("../utils/makeRoomId");
 const Course = require("../models/Course");
 const Enrollment = require("../models/Enrollment");
 const Certificate = require("../models/Certificate");
+const { evaluateCourseJoinability } = require("../utils/courseSession");
+
+/* ------------------------------ Courses ------------------------------ */
 
 // @route GET /api/admin/courses
 const getCourses = asyncHandler(async (req, res) => {
@@ -10,17 +13,30 @@ const getCourses = asyncHandler(async (req, res) => {
     .populate("teacher", "name email")
     .sort({ createdAt: -1 });
 
-  const withCounts = await Promise.all(
+  const enriched = await Promise.all(
     courses.map(async (course) => {
       const studentCount = await Enrollment.countDocuments({
         course: course._id,
         status: { $ne: "cancelled" },
       });
-      return { ...course.toObject(), studentCount };
+
+      const j = evaluateCourseJoinability(course);
+
+      return {
+        ...course.toObject(),
+        studentCount,
+        joinability: {
+          canJoin: j.canJoin,
+          reason: j.reason || null,
+          opensAt: j.opensAt,
+          closesAt: j.closesAt,
+          nextStart: j.nextStart || null,
+        },
+      };
     }),
   );
 
-  res.json({ courses: withCounts });
+  res.json({ courses: enriched, success: true });
 });
 
 // @route GET /api/admin/courses/:id
@@ -33,7 +49,20 @@ const getCourse = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("Course not found");
   }
-  res.json({ course, success: true });
+
+  const j = evaluateCourseJoinability(course);
+
+  res.json({
+    course,
+    joinability: {
+      canJoin: j.canJoin,
+      reason: j.reason || null,
+      opensAt: j.opensAt,
+      closesAt: j.closesAt,
+      nextStart: j.nextStart || null,
+    },
+    success: true,
+  });
 });
 
 // @route POST /api/admin/courses
@@ -47,6 +76,13 @@ const createCourse = asyncHandler(async (req, res) => {
     schedule,
     syllabus,
     image,
+    durationMinutes,
+    joinLeadMinutes,
+    joinGraceMinutes,
+    startDate,
+    endDate,
+    totalSessions,
+    status,
   } = req.body;
 
   if (!title || price === undefined) {
@@ -62,8 +98,15 @@ const createCourse = asyncHandler(async (req, res) => {
     teacher: teacher || undefined,
     schedule,
     syllabus,
-    liveKitRoomId: makeRoomId("course"),
     image,
+    liveKitRoomId: makeRoomId("course"),
+    durationMinutes: durationMinutes ?? 60,
+    joinLeadMinutes: joinLeadMinutes ?? 10,
+    joinGraceMinutes: joinGraceMinutes ?? 15,
+    startDate,
+    endDate,
+    totalSessions: totalSessions ?? 0,
+    status: status || "draft",
   });
 
   res.status(201).json({ course, success: true });
@@ -77,7 +120,7 @@ const updateCourse = asyncHandler(async (req, res) => {
     throw new Error("Course not found");
   }
 
-  const editableFields = [
+  [
     "title",
     "description",
     "category",
@@ -86,8 +129,14 @@ const updateCourse = asyncHandler(async (req, res) => {
     "schedule",
     "syllabus",
     "status",
-  ];
-  editableFields.forEach((field) => {
+    "image",
+    "durationMinutes",
+    "joinLeadMinutes",
+    "joinGraceMinutes",
+    "startDate",
+    "endDate",
+    "totalSessions",
+  ].forEach((field) => {
     if (req.body[field] !== undefined) course[field] = req.body[field];
   });
 
@@ -106,29 +155,43 @@ const deleteCourse = asyncHandler(async (req, res) => {
   res.json({ message: "Course deleted", success: true });
 });
 
+/* ------------------------------ Enrollments ------------------------------ */
+
 // @route GET /api/admin/courses/:id/enrollments
 const getCourseEnrollments = asyncHandler(async (req, res) => {
   const enrollments = await Enrollment.find({ course: req.params.id })
     .populate("student", "name email")
+    .populate("certificate")
     .sort({ createdAt: -1 });
+
   res.json({ enrollments, success: true });
 });
 
-// @route PATCH /api/admin/enrollments/:id/complete — marks an enrollment
-// complete and issues a certificate for the student.
+// @route PATCH /api/admin/enrollments/:id/complete
 const completeEnrollment = asyncHandler(async (req, res) => {
   const enrollment = await Enrollment.findById(req.params.id)
     .populate("course")
     .populate("student");
+
   if (!enrollment) {
     res.status(404);
     throw new Error("Enrollment not found");
+  }
+  if (enrollment.status === "completed") {
+    return res.json({
+      enrollment,
+      certificate: enrollment.certificate,
+      success: true,
+    });
   }
 
   enrollment.status = "completed";
   enrollment.completedAt = new Date();
 
-  const certificateNumber = `CERT-${new Date().getFullYear()}-${makeRoomId("").replace("-", "").toUpperCase()}`;
+  const certificateNumber = `CERT-${new Date().getFullYear()}-${makeRoomId("")
+    .replace("-", "")
+    .toUpperCase()}`;
+
   const certificate = await Certificate.create({
     student: enrollment.student._id,
     course: enrollment.course._id,

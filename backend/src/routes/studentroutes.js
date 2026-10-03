@@ -16,15 +16,18 @@ const {
   getPujaBookingLiveKitToken,
   getMyPujaBooking,
   getFreeClass,
+  getMyCourse
 } = require("../controllers/Studentcontroller");
 
 const router = express.Router();
 
 router.use(protect, authorize("student"));
 
+router.get("/enrollments", getMyEnrollments);
 router.get("/courses", browseCourses);
 router.post("/courses/:id/enroll", enrollInCourse);
-router.get("/enrollments", getMyEnrollments);
+router.get("/courses/:id", getMyCourse);
+router.get("/courses/:id/livekit-token", getCourseLiveKitToken);
 
 router.get("/free-classes", browseFreeClasses);
 router.post("/free-classes/:id/join", joinFreeClass);

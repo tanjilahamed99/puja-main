@@ -115,16 +115,16 @@ export default function EditCoursePage() {
       category,
       price,
       teacher,
-
-      schedule: {
-        days,
-        time,
-        timezone,
-      },
-
+      schedule: { days, time, timezone },
       image,
+      durationMinutes: Number(form.get("durationMinutes")) || 60,
+      joinLeadMinutes: Number(form.get("joinLeadMinutes")) || 10,
+      joinGraceMinutes: Number(form.get("joinGraceMinutes")) || 15,
+      startDate: form.get("startDate") || undefined,
+      endDate: form.get("endDate") || undefined,
+      totalSessions: Number(form.get("totalSessions")) || 0,
+      status: form.get("status") || course?.status || "draft",
     };
-
     setSubmitting(true);
 
     try {
@@ -331,6 +331,109 @@ export default function EditCoursePage() {
               </select>
             </Field>
           </div>
+
+          {/* Session window config */}
+          <div className="pt-2 border-t border-border space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-ink">
+                Session window settings
+              </h3>
+              <p className="text-xs text-inkSoft mt-1">
+                Applied to every recurring session of this course.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-4">
+              <Field label="Duration (min)">
+                <input
+                  name="durationMinutes"
+                  type="number"
+                  min="5"
+                  max="480"
+                  step="5"
+                  defaultValue={course?.durationMinutes ?? 60}
+                  className="input"
+                />
+              </Field>
+              <Field label="Opens before start (min)">
+                <input
+                  name="joinLeadMinutes"
+                  type="number"
+                  min="0"
+                  max="120"
+                  defaultValue={course?.joinLeadMinutes ?? 10}
+                  className="input"
+                />
+              </Field>
+              <Field label="Grace after end (min)">
+                <input
+                  name="joinGraceMinutes"
+                  type="number"
+                  min="0"
+                  max="120"
+                  defaultValue={course?.joinGraceMinutes ?? 15}
+                  className="input"
+                />
+              </Field>
+            </div>
+          </div>
+
+          {/* Course lifecycle */}
+          <div className="pt-2 border-t border-border space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-ink">
+                Course lifecycle
+              </h3>
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-4">
+              <Field label="Start date">
+                <input
+                  name="startDate"
+                  type="date"
+                  defaultValue={
+                    course?.startDate
+                      ? new Date(course.startDate).toISOString().slice(0, 10)
+                      : ""
+                  }
+                  className="input"
+                />
+              </Field>
+              <Field label="End date">
+                <input
+                  name="endDate"
+                  type="date"
+                  defaultValue={
+                    course?.endDate
+                      ? new Date(course.endDate).toISOString().slice(0, 10)
+                      : ""
+                  }
+                  className="input"
+                />
+              </Field>
+              <Field label="Total sessions">
+                <input
+                  name="totalSessions"
+                  type="number"
+                  min="0"
+                  step="1"
+                  defaultValue={course?.totalSessions ?? 0}
+                  className="input"
+                />
+              </Field>
+            </div>
+          </div>
+
+          <Field label="Status">
+            <select
+              name="status"
+              defaultValue={course?.status || "draft"}
+              className="input">
+              <option value="draft">Draft</option>
+              <option value="active">Active</option>
+              <option value="archived">Archived</option>
+            </select>
+          </Field>
 
           <p className="text-xs text-inkSoft">
             A LiveKit room will be generated automatically for each scheduled

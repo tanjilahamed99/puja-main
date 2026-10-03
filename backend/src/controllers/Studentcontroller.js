@@ -8,29 +8,54 @@ const Donation = require("../models/Donation");
 const SpecificPujaPackage = require("../models/SpecificPujaPackage");
 const SpecificPujaBooking = require("../models/SpecificPujaBooking");
 const Certificate = require("../models/Certificate");
-const generateToken = require("../utils/generateToken");
 const { createLiveKitToken } = require("../utils/livekit");
 const { evaluateJoinability } = require("../utils/pujaSession");
 const { evaluateFreeClassJoinability } = require("../utils/freeClassSession");
+const { evaluateCourseJoinability } = require("../utils/courseSession");
 
-// ---------------- Courses ----------------
-
-// @route GET /api/student/courses — browse active, published courses
+// @route GET /api/student/courses — browse active courses
 exports.browseCourses = asyncHandler(async (req, res) => {
   const courses = await Course.find({ status: "active" })
     .populate("teacher", "name")
     .sort({ createdAt: -1 });
+
   res.json({ courses });
 });
 
+// @route GET /api/student/enrollments
+exports.getMyEnrollments = asyncHandler(async (req, res) => {
+  const enrollments = await Enrollment.find({ student: req.user._id })
+    .populate({
+      path: "course",
+      populate: { path: "teacher", select: "name" },
+    })
+    .populate("certificate")
+    .sort({ createdAt: -1 });
+
+  const enriched = enrollments.map((e) => {
+    if (!e.course) return e.toObject();
+    const j = evaluateCourseJoinability(e.course);
+    return {
+      ...e.toObject(),
+      joinability: {
+        canJoin: j.canJoin,
+        reason: j.reason || null,
+        opensAt: j.opensAt,
+        closesAt: j.closesAt,
+        nextStart: j.nextStart || null,
+      },
+    };
+  });
+
+  res.json({ enrollments: enriched });
+});
+
 // @route POST /api/student/courses/:id/enroll
-// body: { method: 'paypal' | 'phonepe', gatewayRef }
-// NOTE: this assumes the payment has already been confirmed client-side by
-// the gateway's checkout flow. Once real PayPal/PhonePe webhooks are wired
-// up, this should instead create the Payment as 'pending' and let the
-// webhook flip it to 'success' before the Enrollment is activated.
 exports.enrollInCourse = asyncHandler(async (req, res) => {
-  const course = await Course.findOne({ _id: req.params.id, status: "active" });
+  const course = await Course.findOne({
+    _id: req.params.id,
+    status: "active",
+  });
   if (!course) {
     res.status(404);
     throw new Error("Course not found or not currently available");
@@ -73,13 +98,79 @@ exports.enrollInCourse = asyncHandler(async (req, res) => {
   res.status(201).json({ enrollment, payment });
 });
 
-// @route GET /api/student/enrollments — this student's own enrollments
-exports.getMyEnrollments = asyncHandler(async (req, res) => {
-  const enrollments = await Enrollment.find({ student: req.user._id })
-    .populate({ path: "course", populate: { path: "teacher", select: "name" } })
-    .populate("certificate")
-    .sort({ createdAt: -1 });
-  res.json({ enrollments });
+// @route GET /api/student/courses/:id — single course detail (must be enrolled)
+exports.getMyCourse = asyncHandler(async (req, res) => {
+  const enrollment = await Enrollment.findOne({
+    student: req.user._id,
+    course: req.params.id,
+    status: { $ne: "cancelled" },
+  }).populate({
+    path: "course",
+    populate: { path: "teacher", select: "name email" },
+  });
+
+  if (!enrollment || !enrollment.course) {
+    res.status(404);
+    throw new Error("Course not found or you are not enrolled");
+  }
+
+  const j = evaluateCourseJoinability(enrollment.course);
+
+  res.json({
+    course: enrollment.course,
+    enrollment,
+    joinability: {
+      canJoin: j.canJoin,
+      reason: j.reason || null,
+      opensAt: j.opensAt,
+      closesAt: j.closesAt,
+      nextStart: j.nextStart || null,
+    },
+  });
+});
+
+// @route GET /api/student/courses/:id/livekit-token
+exports.getCourseLiveKitToken = asyncHandler(async (req, res) => {
+  const course = await Course.findOne({ _id: req.params.id, status: "active" });
+  if (!course) {
+    res.status(404);
+    throw new Error("Course not found or not currently available");
+  }
+
+  const enrollment = await Enrollment.findOne({
+    student: req.user._id,
+    course: course._id,
+    status: { $ne: "cancelled" },
+  });
+  if (!enrollment) {
+    res.status(403);
+    throw new Error("You are not enrolled in this course");
+  }
+
+  const j = evaluateCourseJoinability(course);
+  if (!j.canJoin) {
+    res.status(403);
+    throw new Error(j.reason || "The class is not open right now");
+  }
+
+  const token = await createLiveKitToken({
+    roomName: course.liveKitRoomId,
+    identity: String(req.user._id),
+    name: req.user.name,
+    roomAdmin: false,
+  });
+
+  enrollment.lastJoinedAt = new Date();
+  await enrollment.save();
+
+  res.json({
+    token,
+    roomName: course.liveKitRoomId,
+    serverUrl: process.env.LIVEKIT_URL,
+    opensAt: j.opensAt,
+    closesAt: j.closesAt,
+    nextStart: j.nextStart,
+  });
 });
 
 exports.getFreeClassLiveKitToken = asyncHandler(async (req, res) => {
@@ -110,46 +201,6 @@ exports.getFreeClassLiveKitToken = asyncHandler(async (req, res) => {
   res.json({
     token,
     roomName: freeClass.liveKitRoomId,
-    serverUrl: process.env.LIVEKIT_URL,
-  });
-});
-
-exports.getCourseLiveKitToken = asyncHandler(async (req, res) => {
-  const course = await Course.findOne({ _id: req.params.id, status: "active" });
-  if (!course) {
-    res.status(404);
-    throw new Error("Course not found or not currently available");
-  }
-
-  const enrollment = await Enrollment.findOne({
-    student: req.user._id,
-    course: course._id,
-    status: { $ne: "cancelled" },
-  });
-  if (!enrollment) {
-    res.status(403);
-    throw new Error("You are not enrolled in this course");
-  }
-
-  if (!course.liveKitRoomId) {
-    res.status(400);
-    throw new Error("This course does not have a session room yet");
-  }
-
-  // if (!isWithinJoinWindow(course.schedule)) {
-  //   res.status(403);
-  //   throw new Error("This class is not open to join right now");
-  // }
-
-  const token = await createLiveKitToken({
-    roomName: course.liveKitRoomId,
-    identity: String(req.user._id),
-    name: req.user.name,
-  });
-
-  res.json({
-    token,
-    roomName: course.liveKitRoomId,
     serverUrl: process.env.LIVEKIT_URL,
   });
 });
@@ -209,7 +260,10 @@ exports.browseFreeClasses = asyncHandler(async (req, res) => {
 
 // @route GET /api/student/free-classes/:id
 exports.getFreeClass = asyncHandler(async (req, res) => {
-  const fc = await FreeClass.findById(req.params.id).populate("teacher", "name");
+  const fc = await FreeClass.findById(req.params.id).populate(
+    "teacher",
+    "name",
+  );
   if (!fc) {
     res.status(404);
     throw new Error("Free class not found");
@@ -300,8 +354,6 @@ exports.getFreeClassLiveKitToken = asyncHandler(async (req, res) => {
     closesAt: j.closesAt,
   });
 });
-
-
 
 // ---------------- Specific puja ----------------
 
