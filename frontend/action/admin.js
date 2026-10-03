@@ -142,3 +142,33 @@ export const getRecentEnrollments = () => {
 export const getUpcomingSessions = () => {
   return API.get("/admin/dashboard/upcoming-sessions");
 };
+
+// ---- Specific Puja (extended) ----
+
+export const confirmPujaBooking = (id, confirmedDateTime, reason) => {
+  return API.patch(`/admin/specific-puja/bookings/${id}`, {
+    status: "confirmed",
+    confirmedDateTime,
+    reason,
+  });
+};
+
+export const reschedulePujaBooking = (id, confirmedDateTime, reason) => {
+  return API.patch(`/admin/specific-puja/bookings/${id}`, {
+    confirmedDateTime,
+    reason,
+  });
+};
+
+export const cancelPujaBooking = (id, reason) => {
+  return API.patch(`/admin/specific-puja/bookings/${id}`, {
+    status: "cancelled",
+    reason,
+  });
+};
+
+export const completePujaBooking = (id) => {
+  return API.patch(`/admin/specific-puja/bookings/${id}`, {
+    status: "completed",
+  });
+};

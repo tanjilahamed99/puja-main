@@ -9,10 +9,12 @@ const {
   donateToFreeClass,
   getMyCertificates,
   getMyEnrollments,
-  getMyPujaBookings,
   joinFreeClass,
   getFreeClassLiveKitToken,
   getCourseLiveKitToken,
+  getPujaPackageSlots,
+  getPujaBookingLiveKitToken,
+  getMyPujaBooking,
 } = require("../controllers/Studentcontroller");
 
 const router = express.Router();
@@ -29,7 +31,12 @@ router.post("/free-classes/:id/donate", donateToFreeClass);
 
 router.get("/specific-puja/packages", browsePujaPackages);
 router.post("/specific-puja/packages/:id/book", bookPujaPackage);
-router.get("/specific-puja/bookings", getMyPujaBookings);
+router.get("/specific-puja/bookings/:id", getMyPujaBooking);
+router.get("/specific-puja/packages/:id/slots", getPujaPackageSlots);
+router.get(
+  "/specific-puja/bookings/:id/livekit-token",
+  getPujaBookingLiveKitToken,
+);
 
 router.get("/certificates", getMyCertificates);
 

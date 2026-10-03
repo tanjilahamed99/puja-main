@@ -2,63 +2,54 @@ import API from "@/config/axios";
 
 // ---------------- Courses ----------------
 
-export const browseCourses = () => {
-  return API.get("/student/courses");
-};
+export const browseCourses = () => API.get("/student/courses");
 
-export const enrollInCourse = (courseId, data) => {
-  // data: { method, gatewayRef }
-  return API.post(`/student/courses/${courseId}/enroll`, data);
-};
+export const enrollInCourse = (courseId, data) =>
+  API.post(`/student/courses/${courseId}/enroll`, data);
 
-export const getMyEnrollments = () => {
-  return API.get("/student/enrollments");
-};
+export const getMyEnrollments = () => API.get("/student/enrollments");
+
+export const getCourseLiveKitToken = (courseId) =>
+  API.get(`/student/courses/${courseId}/livekit-token`);
 
 // ---------------- Free Classes ----------------
 
-export const browseFreeClasses = () => {
-  return API.get("/student/free-classes");
-};
+export const browseFreeClasses = () => API.get("/student/free-classes");
 
-export const joinFreeClass = (freeClassId) => {
-  return API.post(`/student/free-classes/${freeClassId}/join`);
-};
+export const getFreeClass = (id) => API.get(`/student/free-classes/${id}`);
 
-export const donateToFreeClass = (freeClassId, data) => {
-  // data: { amount, method, gatewayRef }
-  return API.post(`/student/free-classes/${freeClassId}/donate`, data);
-};
+export const joinFreeClass = (freeClassId) =>
+  API.post(`/student/free-classes/${freeClassId}/join`);
+
+export const donateToFreeClass = (freeClassId, data) =>
+  API.post(`/student/free-classes/${freeClassId}/donate`, data);
+
+export const getFreeClassLiveKitToken = (id) =>
+  API.get(`/student/free-classes/${id}/livekit-token`);
 
 // ---------------- Specific Puja ----------------
 
-export const browsePujaPackages = () => {
-  return API.get("/student/specific-puja/packages");
-};
+export const browsePujaPackages = () =>
+  API.get("/student/specific-puja/packages");
 
-export const bookPujaPackage = (packageId, data) => {
-  // data: { method, gatewayRef, participantInfo, preferredDateTime }
-  return API.post(`/student/specific-puja/packages/${packageId}/book`, data);
-};
+export const getPujaPackageSlots = (packageId) =>
+  API.get(`/student/specific-puja/packages/${packageId}/slots`);
 
-export const getMyPujaBookings = () => {
-  return API.get("/student/specific-puja/bookings");
-};
+export const bookPujaPackage = (packageId, data) =>
+  API.post(`/student/specific-puja/packages/${packageId}/book`, data);
+
+export const getMyPujaBookings = () =>
+  API.get("/student/specific-puja/bookings");
+
+export const getPujaBookingLiveKitToken = (bookingId) =>
+  API.get(`/student/specific-puja/bookings/${bookingId}/livekit-token`);
+
+export const cancelPujaBooking = (bookingId) =>
+  API.post(`/student/specific-puja/bookings/${bookingId}/cancel`);
+
+export const getPujaBooking = (bookingId) =>
+  API.get(`/student/specific-puja/bookings/${bookingId}`);
 
 // ---------------- Certificates ----------------
 
-export const getMyCertificates = () => {
-  return API.get("/student/certificates");
-};
-
-export const getFreeClass = (id) => {
-  return API.get(`/student/free-classes/${id}`);
-};
-
-export const getFreeClassLiveKitToken = (id) => {
-  return API.get(`/student/free-classes/${id}/livekit-token`);
-};
-
-export const getCourseLiveKitToken = (courseId) => {
-  return API.get(`/student/courses/${courseId}/livekit-token`);
-};
+export const getMyCertificates = () => API.get("/student/certificates");

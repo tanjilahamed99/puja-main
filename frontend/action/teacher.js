@@ -47,3 +47,8 @@ export const endFreeClassSession = (freeClassId) =>
 export const getCourseLiveKitToken = (courseId) => {
   return API.get(`/teacher/courses/${courseId}/livekit-token`);
 };
+export const getPujaBookingLiveKitToken = (bookingId) =>
+  API.get(`/teacher/specific-puja/bookings/${bookingId}/livekit-token`);
+
+export const startPujaBooking = (bookingId) =>
+  API.post(`/teacher/specific-puja/bookings/${bookingId}/start`);

@@ -9,17 +9,23 @@ import { toast } from "sonner";
 import Topbar from "@/components/admin/Topbar";
 import Field from "@/components/admin/Field";
 
-import {
-  getTeachers,
-  createPujaPackage,
-} from "@/action/admin";
+import { getTeachers, createPujaPackage } from "@/action/admin";
+
+const DAYS = [
+  { value: 0, label: "Sun" },
+  { value: 1, label: "Mon" },
+  { value: 2, label: "Tue" },
+  { value: 3, label: "Wed" },
+  { value: 4, label: "Thu" },
+  { value: 5, label: "Fri" },
+  { value: 6, label: "Sat" },
+];
 
 export default function NewSpecificPujaPage() {
   const router = useRouter();
 
   const [teachers, setTeachers] = useState([]);
-  const [loadingTeachers, setLoadingTeachers] =
-    useState(true);
+  const [loadingTeachers, setLoadingTeachers] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
@@ -28,12 +34,17 @@ export default function NewSpecificPujaPage() {
     price: "",
     teacher: "",
     status: "draft",
+    durationMinutes: 60,
+    minLeadTimeHours: 24,
+    maxLeadTimeDays: 60,
+    timezone: "Asia/Kolkata",
+    availabilityNote: "",
   });
 
-  const [requiredFields, setRequiredFields] =
-    useState([]);
-
+  const [requiredFields, setRequiredFields] = useState([]);
   const [newField, setNewField] = useState("");
+
+  const [preferredDays, setPreferredDays] = useState([]); // [] means "any day"
 
   useEffect(() => {
     loadTeachers();
@@ -42,18 +53,11 @@ export default function NewSpecificPujaPage() {
   const loadTeachers = async () => {
     try {
       const res = await getTeachers();
-
-      setTeachers(
-        res.data?.teachers ||
-          res.data?.users ||
-          []
-      );
+      setTeachers(res.data?.teachers || res.data?.users || []);
     } catch (error) {
       console.error(error);
-
       toast.error(
-        error?.response?.data?.message ||
-          "Failed to load teachers"
+        error?.response?.data?.message || "Failed to load teachers"
       );
     } finally {
       setLoadingTeachers(false);
@@ -62,42 +66,36 @@ export default function NewSpecificPujaPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const addRequiredField = () => {
     const field = newField.trim();
-
     if (!field) {
       toast.error("Enter a field name");
       return;
     }
-
     if (
       requiredFields.some(
-        (item) =>
-          item.toLowerCase() === field.toLowerCase()
+        (item) => item.toLowerCase() === field.toLowerCase()
       )
     ) {
       toast.error("This field already exists");
       return;
     }
-
-    setRequiredFields((prev) => [
-      ...prev,
-      field,
-    ]);
-
+    setRequiredFields((prev) => [...prev, field]);
     setNewField("");
   };
 
   const removeRequiredField = (index) => {
-    setRequiredFields((prev) =>
-      prev.filter((_, i) => i !== index)
+    setRequiredFields((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const toggleDay = (value) => {
+    setPreferredDays((prev) =>
+      prev.includes(value)
+        ? prev.filter((d) => d !== value)
+        : [...prev, value].sort()
     );
   };
 
@@ -108,11 +106,7 @@ export default function NewSpecificPujaPage() {
       toast.error("Please enter package name");
       return;
     }
-
-    if (
-      form.price === "" ||
-      Number(form.price) < 0
-    ) {
+    if (form.price === "" || Number(form.price) < 0) {
       toast.error("Please enter a valid price");
       return;
     }
@@ -127,19 +121,18 @@ export default function NewSpecificPujaPage() {
         teacher: form.teacher || undefined,
         requiredInfoFields: requiredFields,
         status: form.status,
+        durationMinutes: Number(form.durationMinutes) || 60,
+        minLeadTimeHours: Number(form.minLeadTimeHours) || 24,
+        maxLeadTimeDays: Number(form.maxLeadTimeDays) || 60,
+        timezone: form.timezone?.trim() || "Asia/Kolkata",
+        availabilityNote: form.availabilityNote?.trim() || "",
+        preferredDays,
       });
 
-      toast.success(
-        "Puja package created successfully"
-      );
-
+      toast.success("Puja package created successfully");
       router.push("/admin/specific-puja");
     } catch (error) {
-      console.error(
-        "Create package error:",
-        error
-      );
-
+      console.error("Create package error:", error);
       toast.error(
         error?.response?.data?.message ||
           "Failed to create puja package"
@@ -169,6 +162,7 @@ export default function NewSpecificPujaPage() {
           onSubmit={handleSubmit}
           className="bg-surface border border-border rounded-xl p-6 space-y-6"
         >
+          {/* -------------------- Basic info -------------------- */}
           <Field label="Package name">
             <input
               type="text"
@@ -197,7 +191,6 @@ export default function NewSpecificPujaPage() {
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-inkSoft">
                 ৳
               </span>
-
               <input
                 type="number"
                 name="price"
@@ -225,39 +218,130 @@ export default function NewSpecificPujaPage() {
                   ? "Loading teachers..."
                   : "Select teacher / priest"}
               </option>
-
               {teachers.map((teacher) => (
-                <option
-                  key={teacher._id}
-                  value={teacher._id}
-                >
+                <option key={teacher._id} value={teacher._id}>
                   {teacher.name}
-                  {teacher.email
-                    ? ` (${teacher.email})`
-                    : ""}
+                  {teacher.email ? ` (${teacher.email})` : ""}
                 </option>
               ))}
             </select>
           </Field>
 
-          {/* Required information */}
-          <div>
+          {/* -------------------- Schedule config -------------------- */}
+          <div className="pt-2 border-t border-border space-y-5">
+            <div>
+              <h3 className="text-sm font-semibold text-ink">
+                Scheduling settings
+              </h3>
+              <p className="text-xs text-inkSoft mt-1">
+                These control the slots shown to users when they book this puja.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Field label="Duration (minutes)">
+                <input
+                  type="number"
+                  name="durationMinutes"
+                  value={form.durationMinutes}
+                  onChange={handleChange}
+                  min="15"
+                  step="15"
+                  placeholder="60"
+                  className="input"
+                />
+              </Field>
+              <Field label="Min lead time (hours)">
+                <input
+                  type="number"
+                  name="minLeadTimeHours"
+                  value={form.minLeadTimeHours}
+                  onChange={handleChange}
+                  min="1"
+                  placeholder="24"
+                  className="input"
+                />
+              </Field>
+              <Field label="Max lead time (days)">
+                <input
+                  type="number"
+                  name="maxLeadTimeDays"
+                  value={form.maxLeadTimeDays}
+                  onChange={handleChange}
+                  min="1"
+                  placeholder="60"
+                  className="input"
+                />
+              </Field>
+            </div>
+
+            <Field label="Priest timezone">
+              <input
+                type="text"
+                name="timezone"
+                value={form.timezone}
+                onChange={handleChange}
+                placeholder="Asia/Kolkata"
+                className="input"
+              />
+            </Field>
+
+            <Field label="Availability note (shown to users)">
+              <input
+                type="text"
+                name="availabilityNote"
+                value={form.availabilityNote}
+                onChange={handleChange}
+                placeholder="e.g. Mornings 6–10 AM IST only"
+                className="input"
+              />
+            </Field>
+
+            {/* Preferred days */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Preferred days (optional)
+              </label>
+              <p className="text-xs text-inkSoft mb-3">
+                Leave all unchecked to allow any day of the week.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {DAYS.map((day) => {
+                  const active = preferredDays.includes(day.value);
+                  return (
+                    <button
+                      key={day.value}
+                      type="button"
+                      onClick={() => toggleDay(day.value)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
+                        active
+                          ? "bg-maroon text-ivory border-maroon"
+                          : "bg-surface border-border text-inkSoft hover:border-maroon"
+                      }`}
+                    >
+                      {day.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* -------------------- Required customer info -------------------- */}
+          <div className="pt-2 border-t border-border">
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Required customer information
             </label>
-
             <p className="text-xs text-inkSoft mb-3">
-              Add information that the customer must
-              provide when booking this puja.
+              Add information that the customer must provide when booking this
+              puja.
             </p>
 
             <div className="flex gap-2">
               <input
                 type="text"
                 value={newField}
-                onChange={(e) =>
-                  setNewField(e.target.value)
-                }
+                onChange={(e) => setNewField(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -267,7 +351,6 @@ export default function NewSpecificPujaPage() {
                 placeholder="e.g. Gotra"
                 className="input flex-1"
               />
-
               <button
                 type="button"
                 onClick={addRequiredField}
@@ -280,33 +363,26 @@ export default function NewSpecificPujaPage() {
 
             {requiredFields.length > 0 && (
               <div className="mt-3 space-y-2">
-                {requiredFields.map(
-                  (field, index) => (
-                    <div
-                      key={`${field}-${index}`}
-                      className="flex items-center justify-between border border-border rounded-lg px-3 py-2"
+                {requiredFields.map((field, index) => (
+                  <div
+                    key={`${field}-${index}`}
+                    className="flex items-center justify-between border border-border rounded-lg px-3 py-2"
+                  >
+                    <span className="text-sm">{field}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeRequiredField(index)}
+                      className="p-1.5 rounded-md hover:bg-red-50 text-red-500"
                     >
-                      <span className="text-sm">
-                        {field}
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          removeRequiredField(index)
-                        }
-                        className="p-1.5 rounded-md hover:bg-red-50 text-red-500"
-                      >
-                        <X size={15} />
-                      </button>
-                    </div>
-                  )
-                )}
+                      <X size={15} />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          {/* Status */}
+          {/* -------------------- Status -------------------- */}
           <Field label="Status">
             <select
               name="status"
@@ -314,38 +390,22 @@ export default function NewSpecificPujaPage() {
               onChange={handleChange}
               className="input"
             >
-              <option value="draft">
-                Draft
-              </option>
-
-              <option value="active">
-                Active
-              </option>
-
-              <option value="archived">
-                Archived
-              </option>
+              <option value="draft">Draft</option>
+              <option value="active">Active</option>
+              <option value="archived">Archived</option>
             </select>
           </Field>
 
+          {/* -------------------- Actions -------------------- */}
           <div className="flex items-center gap-3 pt-2">
             <button
               type="submit"
               disabled={saving}
               className="inline-flex items-center justify-center gap-2 bg-maroon text-ivory px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
             >
-              {saving && (
-                <Loader2
-                  size={16}
-                  className="animate-spin"
-                />
-              )}
-
-              {saving
-                ? "Saving..."
-                : "Save Package"}
+              {saving && <Loader2 size={16} className="animate-spin" />}
+              {saving ? "Saving..." : "Save Package"}
             </button>
-
             <Link
               href="/admin/specific-puja"
               className="text-sm text-inkSoft font-medium"

@@ -10,6 +10,7 @@ const SpecificPujaBooking = require("../models/SpecificPujaBooking");
 const Certificate = require("../models/Certificate");
 const generateToken = require("../utils/generateToken");
 const { createLiveKitToken } = require("../utils/livekit");
+const { evaluateJoinability } = require("../utils/pujaSession");
 
 // ---------------- Courses ----------------
 
@@ -233,11 +234,62 @@ exports.bookPujaPackage = asyncHandler(async (req, res) => {
   }
 
   const { method, gatewayRef, participantInfo, preferredDateTime } = req.body;
+
   if (!method) {
     res.status(400);
     throw new Error("Payment method is required");
   }
+  if (!preferredDateTime) {
+    res.status(400);
+    throw new Error("Please choose a date and time for your puja");
+  }
 
+  // ---- Validate the preferred datetime ----
+  const proposed = new Date(preferredDateTime);
+  if (isNaN(proposed.getTime())) {
+    res.status(400);
+    throw new Error("Invalid date/time provided");
+  }
+
+  const now = Date.now();
+  const minTime = now + (pkg.minLeadTimeHours ?? 24) * 60 * 60 * 1000;
+  const maxTime = now + (pkg.maxLeadTimeDays ?? 60) * 24 * 60 * 60 * 1000;
+
+  if (proposed.getTime() < minTime) {
+    res.status(400);
+    throw new Error(
+      `Please choose a time at least ${pkg.minLeadTimeHours ?? 24} hours from now`,
+    );
+  }
+  if (proposed.getTime() > maxTime) {
+    res.status(400);
+    throw new Error(
+      `Please choose a time within the next ${pkg.maxLeadTimeDays ?? 60} days`,
+    );
+  }
+
+  // ---- Prevent double-booking the same teacher in an overlapping window ----
+  if (pkg.teacher) {
+    const duration = pkg.durationMinutes || 60;
+    const windowStart = new Date(proposed.getTime() - duration * 60 * 1000);
+    const windowEnd = new Date(proposed.getTime() + duration * 60 * 1000);
+
+    const conflict = await SpecificPujaBooking.findOne({
+      package: {
+        $in: await SpecificPujaPackage.find({ teacher: pkg.teacher }).distinct(
+          "_id",
+        ),
+      },
+      status: { $in: ["pending", "confirmed"] },
+      scheduledDateTime: { $gt: windowStart, $lt: windowEnd },
+    });
+    if (conflict) {
+      res.status(409);
+      throw new Error("That time slot is already booked. Please pick another.");
+    }
+  }
+
+  // ---- Payment (unchanged — still assumes gateway confirmed client-side) ----
   const payment = await Payment.create({
     user: req.user._id,
     type: "specificPuja",
@@ -247,13 +299,16 @@ exports.bookPujaPackage = asyncHandler(async (req, res) => {
     status: "success",
   });
 
+  // ---- Booking ----
   const booking = await SpecificPujaBooking.create({
     package: pkg._id,
     user: req.user._id,
     payment: payment._id,
     participantInfo,
-    scheduledDateTime: preferredDateTime || undefined,
-    status: "pending", // admin confirms the final schedule and generates the LiveKit room
+    proposedDateTime: proposed,
+    scheduledDateTime: proposed, // mirror until admin confirms
+    durationMinutes: pkg.durationMinutes || 60,
+    status: "pending", // admin confirms later
   });
 
   payment.pujaBooking = booking._id;
@@ -262,12 +317,131 @@ exports.bookPujaPackage = asyncHandler(async (req, res) => {
   res.status(201).json({ booking, payment });
 });
 
-// @route GET /api/student/specific-puja/bookings — this student's own bookings
-exports.getMyPujaBookings = asyncHandler(async (req, res) => {
-  const bookings = await SpecificPujaBooking.find({ user: req.user._id })
-    .populate("package", "name price")
-    .sort({ createdAt: -1 });
-  res.json({ bookings });
+// @route GET /api/student/specific-puja/bookings/:id
+exports.getMyPujaBooking = asyncHandler(async (req, res) => {
+  const booking = await SpecificPujaBooking.findOne({
+    _id: req.params.id,
+    user: req.user._id,
+  }).populate("package", "name description price durationMinutes teacher");
+
+  if (!booking) {
+    res.status(404);
+    throw new Error("Booking not found");
+  }
+
+  const joinability = evaluateJoinability(booking);
+
+  res.json({
+    booking,
+    joinability: {
+      canJoin: joinability.canJoin,
+      reason: joinability.reason || null,
+      opensAt: joinability.opensAt,
+      closesAt: joinability.closesAt,
+    },
+  });
+});
+
+// @route GET /api/student/specific-puja/bookings/:id/livekit-token
+exports.getPujaBookingLiveKitToken = asyncHandler(async (req, res) => {
+  const booking = await SpecificPujaBooking.findOne({
+    _id: req.params.id,
+    user: req.user._id,
+  });
+  if (!booking) {
+    res.status(404);
+    throw new Error("Booking not found");
+  }
+
+  const joinability = evaluateJoinability(booking);
+  if (!joinability.canJoin) {
+    res.status(403);
+    throw new Error(joinability.reason || "The session is not open yet");
+  }
+
+  const token = await createLiveKitToken({
+    roomName: booking.liveKitRoomId,
+    identity: String(req.user._id),
+    name: req.user.name,
+    roomAdmin: false,
+  });
+
+  res.json({
+    token,
+    roomName: booking.liveKitRoomId,
+    serverUrl: process.env.LIVEKIT_URL,
+    opensAt: joinability.opensAt,
+    closesAt: joinability.closesAt,
+  });
+});
+
+// @route GET /api/student/specific-puja/packages/:id/slots
+// Returns available hourly slots for the next N days, excluding conflicts.
+exports.getPujaPackageSlots = asyncHandler(async (req, res) => {
+  const pkg = await SpecificPujaPackage.findOne({
+    _id: req.params.id,
+    status: "active",
+  });
+  if (!pkg) {
+    res.status(404);
+    throw new Error("Puja package not found");
+  }
+
+  const duration = pkg.durationMinutes || 60;
+  const stepMinutes = 60; // hour-by-hour slots
+  const days = Math.min(pkg.maxLeadTimeDays ?? 60, 30);
+  const leadHours = pkg.minLeadTimeHours ?? 24;
+
+  // Pull existing bookings for this teacher's packages in the window
+  const pkgIds = await SpecificPujaPackage.find({
+    teacher: pkg.teacher,
+  }).distinct("_id");
+  const windowStart = new Date(Date.now() + leadHours * 3600 * 1000);
+  const windowEnd = new Date(Date.now() + days * 24 * 3600 * 1000);
+
+  const busy = await SpecificPujaBooking.find({
+    package: { $in: pkgIds },
+    status: { $in: ["pending", "confirmed"] },
+    scheduledDateTime: { $gte: windowStart, $lte: windowEnd },
+  })
+    .select("scheduledDateTime durationMinutes")
+    .lean();
+
+  const busyWindows = busy.map((b) => ({
+    start: new Date(b.scheduledDateTime).getTime(),
+    end:
+      new Date(b.scheduledDateTime).getTime() +
+      (b.durationMinutes || 60) * 60_000,
+  }));
+
+  // Build slot list
+  const slots = [];
+  for (
+    let d = new Date(windowStart);
+    d <= windowEnd;
+    d.setDate(d.getDate() + 1)
+  ) {
+    // Skip disallowed days if preferredDays is set
+    if (pkg.preferredDays?.length && !pkg.preferredDays.includes(d.getDay()))
+      continue;
+
+    // Simple 8 AM – 8 PM local window (adjust using pkg.timezone if needed)
+    for (let hour = 8; hour <= 20; hour += stepMinutes / 60) {
+      const slotStart = new Date(d);
+      slotStart.setHours(hour, 0, 0, 0);
+      if (slotStart.getTime() < windowStart.getTime()) continue;
+
+      const slotEnd = slotStart.getTime() + duration * 60_000;
+      const overlaps = busyWindows.some(
+        (w) => slotStart.getTime() < w.end && slotEnd > w.start,
+      );
+      if (overlaps) continue;
+
+      slots.push(slotStart.toISOString());
+    }
+  }
+
+  res.json({ slots, timezone: pkg.timezone, durationMinutes: duration });
 });
 
 // ---------------- Certificates ----------------
