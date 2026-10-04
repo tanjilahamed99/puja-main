@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL || "http://103.243.232.236:5015/api",
+  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL || "https://api-karmkandbharti.sewamahe.in/api",
 });
 
 const Navigate = (path) => {
