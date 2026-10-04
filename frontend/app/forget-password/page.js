@@ -27,7 +27,7 @@ export default function ForgotPasswordPage() {
       <div className="hidden lg:flex lg:w-[42%] bg-[var(--sidebar-bg)] text-[var(--sidebar-ink)] flex-col justify-between p-10 xl:p-14">
         <div className="flex items-center gap-2.5">
           <FlameMark />
-          <span className="font-display text-xl font-semibold tracking-wide">Sanatan Path</span>
+          <span className="font-display text-xl font-semibold tracking-wide">Karmkand Bharti</span>
         </div>
         <div className="max-w-sm">
           <h2 className="font-display text-3xl xl:text-4xl font-semibold leading-tight">
@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
         <p className="text-xs text-[var(--sidebar-ink-soft)]">
-          &copy; {new Date().getFullYear()} Sanatan Path
+          &copy; {new Date().getFullYear()} Karmkand Bharti
         </p>
       </div>
 
@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
         <div className="w-full max-w-sm">
           <div className="flex items-center gap-2.5 mb-8 lg:hidden">
             <Flame className="text-maroon" size={24} />
-            <span className="font-display text-lg font-semibold text-ink">Sanatan Path</span>
+            <span className="font-display text-lg font-semibold text-ink">Karmkand Bharti</span>
           </div>
 
           <Link

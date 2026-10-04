@@ -61,7 +61,7 @@ export default function RegisterPage() {
         <div className="flex items-center gap-2.5">
           <FlameMark />
           <span className="font-display text-xl font-semibold tracking-wide">
-            Sanatan Path
+            Karmkand Bharti
           </span>
         </div>
         <div className="max-w-sm">
@@ -74,7 +74,7 @@ export default function RegisterPage() {
           </p>
         </div>
         <p className="text-xs text-[var(--sidebar-ink-soft)]">
-          &copy; {new Date().getFullYear()} Sanatan Path
+          &copy; {new Date().getFullYear()} Karmkand Bharti
         </p>
       </div>
 
@@ -84,7 +84,7 @@ export default function RegisterPage() {
           <div className="flex items-center gap-2.5 mb-8 lg:hidden">
             <Flame className="text-maroon" size={24} />
             <span className="font-display text-lg font-semibold text-ink">
-              Sanatan Path
+              Karmkand Bharti
             </span>
           </div>
 

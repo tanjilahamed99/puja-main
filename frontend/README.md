@@ -1,6 +1,6 @@
-# Sanatan Path — Admin Panel
+# Karmkand Bharti — Admin Panel
 
-Next.js (JavaScript, App Router — no TypeScript) admin panel for the Sanatan Path puja learning platform.
+Next.js (JavaScript, App Router — no TypeScript) admin panel for the Karmkand Bharti puja learning platform.
 
 ## Getting started
 

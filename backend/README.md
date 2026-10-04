@@ -1,6 +1,6 @@
-# Sanatan Path — Admin Backend
+# Karmkand Bharti — Admin Backend
 
-Node.js + Express + MongoDB (Mongoose) API powering the Sanatan Path admin panel.
+Node.js + Express + MongoDB (Mongoose) API powering the Karmkand Bharti admin panel.
 Plain JavaScript — no TypeScript, matching the frontend.
 
 ## Getting started

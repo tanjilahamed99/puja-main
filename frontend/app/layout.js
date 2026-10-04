@@ -2,8 +2,8 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata = {
-  title: "Sanatan Path — Admin",
-  description: "Admin panel for the Sanatan Path puja learning platform",
+  title: "Karmkand Bharti",
+  description: "Admin panel for the Karmkand Bharti puja learning platform",
 };
 
 export default function RootLayout({ children }) {

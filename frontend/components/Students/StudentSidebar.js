@@ -65,9 +65,14 @@ export default function StudentSidebar() {
           ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}>
         <div className="flex items-center justify-between px-5 py-6">
           <div className="flex items-center gap-2.5">
-            <FlameMark />
+            <Image
+              src="/logo.png"
+              alt="Karmkand Bharti"
+              width={40}
+              height={40}
+            />
             <span className="font-display text-lg font-semibold tracking-wide">
-              Sanatan Path
+              Karmkand Bharti
             </span>
           </div>
           <button

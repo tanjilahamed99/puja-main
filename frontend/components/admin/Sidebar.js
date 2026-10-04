@@ -66,7 +66,7 @@ export default function Sidebar() {
           <div className="flex items-center gap-2.5">
             <FlameMark />
             <span className="font-display text-lg font-semibold tracking-wide">
-              Sanatan Path
+              Karmkand Bharti
             </span>
           </div>
           <button
