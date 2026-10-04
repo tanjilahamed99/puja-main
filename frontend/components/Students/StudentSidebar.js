@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/features/Useauthstore";
 import { toast } from "sonner";
+import Logo from "../Logo";
 
 const NAV_ITEMS = [
   { href: "/student", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -65,12 +66,7 @@ export default function StudentSidebar() {
           ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}>
         <div className="flex items-center justify-between px-5 py-6">
           <div className="flex items-center gap-2.5">
-            <Image
-              src="/logo.png"
-              alt="Karmkand Bharti"
-              width={40}
-              height={40}
-            />
+            <Logo />
             <span className="font-display text-lg font-semibold tracking-wide">
               Karmkand Bharti
             </span>
