@@ -33,7 +33,7 @@ function weekdayShort(date) {
 function hhmm(date) {
   const d = new Date(date);
   return `${String(d.getHours()).padStart(2, "0")}:${String(
-    d.getMinutes()
+    d.getMinutes(),
   ).padStart(2, "0")}`;
 }
 
@@ -62,9 +62,9 @@ const run = async () => {
   console.log("👤  Creating users…");
 
   await User.create({
-    name: "Tanjil Admin",
-    email: "admin@sanatanpath.com",
-    password: "Admin@123",
+    name: "Admin User",
+    email: "admin@gmail.com",
+    password: "admin12",
     role: "admin",
   });
 
@@ -84,8 +84,8 @@ const run = async () => {
 
   const teacherChatterjee = await User.create({
     name: "Pandit S. Chatterjee",
-    email: "s.chatterjee@sanatanpath.com",
-    password: "Teacher@123",
+    email: "teacher@gmail.com",
+    password: "teacher",
     role: "teacher",
   });
 
@@ -105,8 +105,8 @@ const run = async () => {
 
   const student3 = await User.create({
     name: "Priya Nair",
-    email: "priya@example.com",
-    password: "Student@123",
+    email: "student@gmail.com",
+    password: "student",
     role: "student",
   });
 
@@ -292,8 +292,8 @@ const run = async () => {
         date,
         status: "present",
         markedBy: teacherChatterjee._id,
-      })
-    )
+      }),
+    ),
   );
 
   /* ------------------------------ free classes ------------------------------ */
@@ -347,8 +347,7 @@ const run = async () => {
   // --- FreeClass C: completed yesterday ---
   const freeEnded = await FreeClass.create({
     title: "Understanding Aarti",
-    description:
-      "What each aarti symbolizes and how to perform it correctly.",
+    description: "What each aarti symbolizes and how to perform it correctly.",
     teacher: teacherJoshi._id,
     dateTime: agoMin(60 * 26),
     liveKitRoomId: "free-aarti",
@@ -395,11 +394,7 @@ const run = async () => {
       "A private puja performed for peace and protection in a household.",
     price: 2999,
     teacher: teacherSharma._id,
-    requiredInfoFields: [
-      "Full name",
-      "Date of birth",
-      "Nakshatra (if known)",
-    ],
+    requiredInfoFields: ["Full name", "Date of birth", "Nakshatra (if known)"],
     status: "active",
     durationMinutes: 60,
     minLeadTimeHours: 24,
