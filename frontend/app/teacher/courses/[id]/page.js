@@ -15,7 +15,7 @@ import {
 import { toast } from "sonner";
 
 import Topbar from "@/components/admin/Topbar";
-import JoinPujaButton from "@/components/puja/JoinPujaButton";
+import JoinPujaButton from "@/components/JoinPujaButton";
 
 import {
   getMyCourses,

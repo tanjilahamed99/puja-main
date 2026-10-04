@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ChevronLeft, CalendarDays, Clock3, Loader2 } from "lucide-react";
 import Topbar from "@/components/admin/Topbar";
-import JoinPujaButton from "@/components/puja/JoinPujaButton";
+import JoinPujaButton from "@/components/JoinPujaButton";
 import { getMyCourse, getCourseLiveKitToken } from "@/action/student";
 
 function formatDateTime(v) {
