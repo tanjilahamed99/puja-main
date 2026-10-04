@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import Logo from "./Logo";
 
 export default function SiteFooter() {
   return (
@@ -7,12 +8,7 @@ export default function SiteFooter() {
       <div className="max-w-6xl mx-auto px-5 sm:px-8 py-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
         <div className="lg:col-span-1">
           <div className="flex items-center gap-2.5">
-            <Image
-              src="/logo.png"
-              alt="Karmkand Bharti"
-              width={40}
-              height={40}
-            />
+           <Logo />
             <span className="font-display text-lg font-semibold text-ink">
               Karmkand Bharti
             </span>

@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react";
 import { dashboardPathForRole } from "./dashboardPathForRole";
 import { useAuthStore } from "@/features/Useauthstore";
 import Image from "next/image";
+import Logo from "./Logo";
 // import GoogleTranslate from "./GoogleTranslate";
 
 const NAV_LINKS = [
@@ -29,8 +30,7 @@ export default function SiteHeader() {
     <header className="sticky top-0 z-40 bg-ivory/95 backdrop-blur border-b border-border">
       <div className="max-w-6xl mx-auto px-5 sm:px-8 flex items-center justify-between h-16 sm:h-[72px]">
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          <Image src="/logo.png" alt="Karmkand Bharti" width={40} height={40} />
-
+          <Logo />
           <span className="font-display text-lg sm:text-xl font-semibold tracking-wide text-ink">
             Karmkand Bharti
           </span>

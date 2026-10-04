@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { register } from "@/action/auth";
 import { useAuthStore } from "@/features/Useauthstore";
 import { toast } from "sonner";
+import Image from "next/image";
+import Logo from "@/components/Logo";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -59,7 +61,7 @@ export default function RegisterPage() {
       {/* Branding panel — hidden on small screens */}
       <div className="hidden lg:flex lg:w-[42%] bg-[var(--sidebar-bg)] text-[var(--sidebar-ink)] flex-col justify-between p-10 xl:p-14">
         <div className="flex items-center gap-2.5">
-          <FlameMark />
+           <Logo />
           <span className="font-display text-xl font-semibold tracking-wide">
             Karmkand Bharti
           </span>

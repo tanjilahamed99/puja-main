@@ -3,9 +3,18 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { LayoutDashboard, BookOpen, Radio, Flame, Menu, X, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  BookOpen,
+  Radio,
+  Flame,
+  Menu,
+  X,
+  LogOut,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/features/Useauthstore";
+import Logo from "../Logo";
 
 const NAV_ITEMS = [
   { href: "/teacher", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -53,7 +62,7 @@ export default function TeacherSidebar() {
           ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}>
         <div className="flex items-center justify-between px-5 py-6">
           <div className="flex items-center gap-2.5">
-            <FlameMark />
+            <Logo />
             <span className="font-display text-lg font-semibold tracking-wide">
               Karmkand Bharti
             </span>
