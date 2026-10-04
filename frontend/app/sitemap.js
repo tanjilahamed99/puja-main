@@ -1,7 +1,7 @@
 const SITE_URL = "https://karmkandbharti.com";
 
 // If your backend is at a different URL, call it to fetch dynamic content
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api-karmkandbharti.sewamahe.in/api";
 
 async function fetchCourses() {
   try {
