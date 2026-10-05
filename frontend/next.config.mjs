@@ -1,9 +1,12 @@
 /** @type {import('next').NextConfig} */
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin("./i18n/request.js");
+
 const nextConfig = {
-  productionBrowserSourceMaps: false, // default is already false, but be explicit
+  productionBrowserSourceMaps: false,
   webpack: (config, { dev, isServer }) => {
     if (!dev && !isServer) {
-      // Fully disable source maps for client bundles in production
       config.devtool = false;
     }
     return config;
@@ -16,4 +19,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default withNextIntl(nextConfig);

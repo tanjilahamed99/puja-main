@@ -1,0 +1,170 @@
+{
+  "meta": {
+    "siteName": "Karmkand Bharti",
+    "tagline": "Learn Hindu Puja & Rituals Live",
+    "description": "Learn authentic Hindu puja, rituals, and Vedic practices through live online classes — subscription courses, free weekly sessions, and one-on-one specific puja bookings."
+  },
+  "lang": {
+    "label": "Change language"
+  },
+  "home": {
+    "hero": {
+      "badge": "Live virtual sessions, guided by real teachers",
+      "title": "Learn puja the way it was meant to be taught",
+      "subtitle": "Structured courses, open community classes, and one-on-one personal puja — all conducted live online, in Hindi, Bangla, or English.",
+      "browse": "Browse Courses",
+      "freeClass": "Join a Free Class",
+      "todayClass": "Today at 7:00 PM — Ganesh Puja basics (Free)"
+    },
+    "stats": {
+      "courses": "Guided courses",
+      "students": "Students taught",
+      "sessions": "Weekly free sessions",
+      "languages": "Languages supported"
+    },
+    "how": {
+      "heading": "How it works",
+      "subtitle": "Three simple steps, whether you're joining a free session or enrolling in a full course.",
+      "steps": {
+        "choose": {
+          "title": "Choose your path",
+          "text": "Enroll in a full course, drop into a free class, or book a specific puja just for you."
+        },
+        "meet": {
+          "title": "Meet your teacher live",
+          "text": "Every session runs as a real-time video class — ask questions and follow along as you go."
+        },
+        "track": {
+          "title": "Track your progress",
+          "text": "Finish a course and get a certificate. Keep returning to free classes any week you like."
+        }
+      }
+    },
+    "ways": {
+      "heading": "Three ways to learn",
+      "subtitle": "Structured guidance for the dedicated student, an open door for anyone curious, and a private option for something just for you.",
+      "courses": {
+        "badge": "Subscription Courses",
+        "title": "A full guided course, start to finish",
+        "text": "Enroll once, get a fixed teacher and schedule, and learn a puja tradition end to end.",
+        "p1": "Assigned teacher & fixed weekly schedule",
+        "p2": "One-time payment — full course, no subscriptions",
+        "p3": "Certificate on completion",
+        "label": "From ৳999",
+        "cta": "Browse courses →"
+      },
+      "free": {
+        "badge": "Free Classes",
+        "title": "Open to everyone, no cost to join",
+        "text": "Join any weekly session live. A donation box appears at the end — entirely optional.",
+        "p1": "Open to any logged-in member — no purchase needed",
+        "p2": "New sessions added every week",
+        "p3": "Optional donation at the end of class",
+        "label": "Free to join",
+        "cta": "Join a class →"
+      },
+      "specific": {
+        "badge": "Specific Puja",
+        "title": "A private puja, just for you",
+        "text": "Book a one-on-one session — after payment, it's scheduled individually and conducted privately for you.",
+        "p1": "One-on-one, not a shared class",
+        "p2": "Scheduled around your availability",
+        "p3": "Conducted by a dedicated teacher",
+        "label": "Booked separately",
+        "cta": "Book a puja →"
+      }
+    },
+    "popular": {
+      "heading": "Popular courses",
+      "subtitle": "A few of the courses students come back for.",
+      "viewAll": "View all courses →",
+      "enroll": "Enroll →",
+      "items": {
+        "griha": {
+          "title": "Griha Pravesh Puja Basics",
+          "teacher": "Pandit R. Sharma",
+          "category": "Griha Puja",
+          "schedule": "Mon, Wed · 6:00 PM"
+        },
+        "durga": {
+          "title": "Durga Puja Rituals for Families",
+          "teacher": "Pandit K. Joshi",
+          "category": "Festival Puja",
+          "schedule": "Tue, Thu · 7:00 PM"
+        },
+        "everyday": {
+          "title": "Everyday Puja & Aarti",
+          "teacher": "Pandit S. Chatterjee",
+          "category": "Everyday Rituals",
+          "schedule": "Sat · 9:00 AM"
+        }
+      }
+    },
+    "teachers": {
+      "heading": "Learn from real teachers",
+      "subtitle": "Every session is taught live — no pre-recorded videos.",
+      "items": {
+        "sharma": {
+          "name": "Pandit R. Sharma",
+          "focus": "Griha Puja & Vedic Basics",
+          "initials": "RS"
+        },
+        "joshi": {
+          "name": "Pandit K. Joshi",
+          "focus": "Festival Puja & Family Rituals",
+          "initials": "KJ"
+        },
+        "chatterjee": {
+          "name": "Pandit S. Chatterjee",
+          "focus": "Everyday Puja & Mantras",
+          "initials": "SC"
+        }
+      }
+    },
+    "reviews": {
+      "heading": "What students say",
+      "items": {
+        "ritika": {
+          "quote": "I grew up watching my grandmother perform Griha Pravesh but never learned the steps myself. This course finally gave me the confidence to do it for my own home.",
+          "name": "Ritika Sharma",
+          "role": "Student, Griha Pravesh Puja Basics"
+        },
+        "abir": {
+          "quote": "The free classes are a wonderful way to try things out before committing. I joined on a whim and ended up learning mantras I still use every morning.",
+          "name": "Abir Hasan",
+          "role": "Free Class participant"
+        }
+      }
+    },
+    "trust": {
+      "curriculum": {
+        "title": "Structured curriculum",
+        "text": "Every course follows a clear syllabus, not ad-hoc sessions."
+      },
+      "live": {
+        "title": "Real, live teachers",
+        "text": "Ask questions in the moment — nothing pre-recorded."
+      },
+      "language": {
+        "title": "Learn in your language",
+        "text": "Hindi, Bangla, or English — switch anytime."
+      }
+    },
+    "cta": {
+      "badge": "Free to join",
+      "title": "Ready to start? Your first class is free.",
+      "create": "Create free account",
+      "login": "Log in"
+    }
+  },
+  "nav": {
+    "how": "How it works",
+    "courses": "Courses",
+    "free": "Free Classes",
+    "specific": "Specific Puja",
+    "login": "Log in"
+  },
+  "footer": {
+    "rights": "All rights reserved"
+  }
+}

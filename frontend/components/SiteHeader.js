@@ -7,6 +7,7 @@ import { dashboardPathForRole } from "./dashboardPathForRole";
 import { useAuthStore } from "@/features/Useauthstore";
 import Image from "next/image";
 import Logo from "./Logo";
+import LangSwitcher from "./LangSwitcher";
 // import GoogleTranslate from "./GoogleTranslate";
 
 const NAV_LINKS = [
@@ -48,6 +49,7 @@ export default function SiteHeader() {
         </nav>
 
         <div className="hidden lg:flex items-center gap-3">
+          <LangSwitcher />
           {user ? (
             <Link
               href={dashboardHref}
@@ -69,8 +71,6 @@ export default function SiteHeader() {
             </>
           )}
         </div>
-
-        {/* <GoogleTranslate /> */}
 
         <button
           type="button"

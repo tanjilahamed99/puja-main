@@ -1,80 +1,36 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { CheckCircle2, BookOpen, Users, Globe2, Heart, Sparkles, Flame } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { useServiceLink } from "@/components/Useservicelink";
 
+/* Only language-independent data stays here (numbers, prices, ids).
+   All visible text comes from messages/*.json → "home". */
 const stats = [
-  { value: "40+", label: "Guided courses" },
-  { value: "1,200+", label: "Students taught" },
-  { value: "120", label: "Weekly free sessions" },
-  { value: "3", label: "Languages supported" },
+  { key: "courses", value: "40+" },
+  { key: "students", value: "1,200+" },
+  { key: "sessions", value: "120" },
+  { key: "languages", value: "3" },
 ];
 
-const steps = [
-  {
-    title: "Choose your path",
-    description: "Enroll in a full course, drop into a free class, or book a specific puja just for you.",
-  },
-  {
-    title: "Meet your teacher live",
-    description: "Every session runs as a real-time video class — ask questions and follow along as you go.",
-  },
-  {
-    title: "Track your progress",
-    description: "Finish a course and get a certificate. Keep returning to free classes any week you like.",
-  },
-];
+const stepKeys = ["choose", "meet", "track"];
+const pointKeys = ["p1", "p2", "p3"];
 
 const featuredCourses = [
-  {
-    title: "Griha Pravesh Puja Basics",
-    teacher: "Pandit R. Sharma",
-    category: "Griha Puja",
-    price: "৳1,499",
-    schedule: "Mon, Wed · 6:00 PM",
-  },
-  {
-    title: "Durga Puja Rituals for Families",
-    teacher: "Pandit K. Joshi",
-    category: "Festival Puja",
-    price: "৳1,999",
-    schedule: "Tue, Thu · 7:00 PM",
-  },
-  {
-    title: "Everyday Puja & Aarti",
-    teacher: "Pandit S. Chatterjee",
-    category: "Everyday Rituals",
-    price: "৳999",
-    schedule: "Sat · 9:00 AM",
-  },
+  { key: "griha", price: "৳1,499" },
+  { key: "durga", price: "৳1,999" },
+  { key: "everyday", price: "৳999" },
 ];
 
-const teachers = [
-  { name: "Pandit R. Sharma", focus: "Griha Puja & Vedic Basics", initials: "RS" },
-  { name: "Pandit K. Joshi", focus: "Festival Puja & Family Rituals", initials: "KJ" },
-  { name: "Pandit S. Chatterjee", focus: "Everyday Puja & Mantras", initials: "SC" },
-];
-
-const testimonials = [
-  {
-    quote:
-      "I grew up watching my grandmother perform Griha Pravesh but never learned the steps myself. This course finally gave me the confidence to do it for my own home.",
-    name: "Ritika Sharma",
-    role: "Student, Griha Pravesh Puja Basics",
-  },
-  {
-    quote:
-      "The free classes are a wonderful way to try things out before committing. I joined on a whim and ended up learning mantras I still use every morning.",
-    name: "Abir Hasan",
-    role: "Free Class participant",
-  },
-];
+const teacherKeys = ["sharma", "joshi", "chatterjee"];
+const reviewKeys = ["ritika", "abir"];
 
 export default function HomePage() {
   const goTo = useServiceLink();
+  const t = useTranslations("home");
 
   return (
     <>
@@ -87,14 +43,14 @@ export default function HomePage() {
             <div>
               <div className="inline-flex items-center gap-2 text-sm font-semibold text-maroonDeep mb-5">
                 <Sparkles size={16} />
-                Live virtual sessions, guided by real teachers
+                {t("hero.badge")}
               </div>
-              <h1 className="font-display font-semibold text-ink leading-[1.08] text-4xl sm:text-5xl lg:text-[3.4rem] max-w-xl">
-                Learn puja the way it was meant to be taught
+              {/* Hindi needs a bit more line-height than Latin; leading-[1.08] clips matras */}
+              <h1 className="font-display font-semibold text-ink leading-[1.2] text-4xl sm:text-5xl lg:text-[3.4rem] max-w-xl">
+                {t("hero.title")}
               </h1>
               <p className="text-inkSoft text-base sm:text-lg mt-6 max-w-lg leading-relaxed">
-                Structured courses, open community classes, and one-on-one personal puja — all
-                conducted live online, in Hindi, Bangla, or English.
+                {t("hero.subtitle")}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 mt-8">
                 <button
@@ -102,22 +58,22 @@ export default function HomePage() {
                   onClick={() => goTo("/student/courses", { guestPath: "/register" })}
                   className="bg-maroon text-ivory text-sm font-semibold px-6 py-3.5 rounded-lg text-center hover:opacity-90 transition"
                 >
-                  Browse Courses
+                  {t("hero.browse")}
                 </button>
                 <button
                   type="button"
                   onClick={() => goTo("/student/free-classes")}
                   className="border border-border text-ink text-sm font-semibold px-6 py-3.5 rounded-lg text-center hover:border-maroon transition-colors"
                 >
-                  Join a Free Class
+                  {t("hero.freeClass")}
                 </button>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-12 pt-8 border-t border-border">
                 {stats.map((s) => (
-                  <div key={s.label}>
+                  <div key={s.key}>
                     <p className="font-display text-2xl sm:text-3xl font-semibold text-maroon">{s.value}</p>
-                    <p className="text-xs sm:text-sm text-inkSoft mt-1">{s.label}</p>
+                    <p className="text-xs sm:text-sm text-inkSoft mt-1">{t(`stats.${s.key}`)}</p>
                   </div>
                 ))}
               </div>
@@ -130,7 +86,7 @@ export default function HomePage() {
                   className="absolute -top-10 left-1/2 -translate-x-1/2 w-56 h-56 rounded-full blur-2xl"
                   style={{ background: "radial-gradient(circle, rgba(244,200,106,0.5), transparent 65%)" }}
                 />
-                <svg viewBox="0 0 240 220" className="relative w-full h-auto">
+                <svg viewBox="0 0 240 220" className="relative w-full h-auto" aria-hidden="true">
                   <ellipse cx="120" cy="170" rx="78" ry="18" fill="var(--color-gold)" opacity="0.22" />
                   <path
                     d="M60 150c0-28 22-40 60-40s60 12 60 40c0 16-14 28-60 28s-60-12-60-28z"
@@ -151,9 +107,7 @@ export default function HomePage() {
                     fill="#F8E39A"
                   />
                 </svg>
-                <p className="text-center text-sm text-inkSoft mt-2 relative">
-                  Today at 7:00 PM — Ganesh Puja basics (Free)
-                </p>
+                <p className="text-center text-sm text-inkSoft mt-2 relative">{t("hero.todayClass")}</p>
               </div>
             </div>
           </div>
@@ -163,17 +117,15 @@ export default function HomePage() {
         <section id="how-it-works" className="bg-surface border-y border-border">
           <div className="max-w-6xl mx-auto px-5 sm:px-8 py-16 sm:py-20">
             <div className="max-w-xl mb-12">
-              <h2 className="font-display font-semibold text-2xl sm:text-3xl text-ink">How it works</h2>
-              <p className="text-inkSoft mt-3">
-                Three simple steps, whether you&apos;re joining a free session or enrolling in a full course.
-              </p>
+              <h2 className="font-display font-semibold text-2xl sm:text-3xl text-ink">{t("how.heading")}</h2>
+              <p className="text-inkSoft mt-3">{t("how.subtitle")}</p>
             </div>
             <div className="grid sm:grid-cols-3 gap-8 sm:gap-6">
-              {steps.map((step, i) => (
-                <div key={step.title} className="border-t-2 border-maroon pt-5">
+              {stepKeys.map((key, i) => (
+                <div key={key} className="border-t-2 border-maroon pt-5">
                   <span className="font-display text-xl font-semibold text-goldDeep">0{i + 1}</span>
-                  <h3 className="font-display font-semibold text-lg mt-2">{step.title}</h3>
-                  <p className="text-inkSoft text-sm mt-2 leading-relaxed">{step.description}</p>
+                  <h3 className="font-display font-semibold text-lg mt-2">{t(`how.steps.${key}.title`)}</h3>
+                  <p className="text-inkSoft text-sm mt-2 leading-relaxed">{t(`how.steps.${key}.text`)}</p>
                 </div>
               ))}
             </div>
@@ -183,43 +135,34 @@ export default function HomePage() {
         {/* Three ways to learn */}
         <section className="max-w-6xl mx-auto px-5 sm:px-8 py-16 sm:py-20">
           <div className="max-w-xl mb-12">
-            <h2 className="font-display font-semibold text-2xl sm:text-3xl text-ink">Three ways to learn</h2>
-            <p className="text-inkSoft mt-3">
-              Structured guidance for the dedicated student, an open door for anyone curious, and a
-              private option for something just for you.
-            </p>
+            <h2 className="font-display font-semibold text-2xl sm:text-3xl text-ink">{t("ways.heading")}</h2>
+            <p className="text-inkSoft mt-3">{t("ways.subtitle")}</p>
           </div>
 
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Subscription Courses */}
             <div id="courses" className="bg-surface border border-border rounded-2xl p-7 flex flex-col gap-4">
               <span className="inline-flex self-start text-xs font-bold text-maroon bg-[#F7E5E5] px-3 py-1 rounded-full">
-                Subscription Courses
+                {t("ways.courses.badge")}
               </span>
-              <h3 className="font-display text-xl font-semibold">A full guided course, start to finish</h3>
-              <p className="text-inkSoft text-sm leading-relaxed">
-                Enroll once, get a fixed teacher and schedule, and learn a puja tradition end to end.
-              </p>
+              <h3 className="font-display text-xl font-semibold">{t("ways.courses.title")}</h3>
+              <p className="text-inkSoft text-sm leading-relaxed">{t("ways.courses.text")}</p>
               <ul className="space-y-2.5 mt-1">
-                {[
-                  "Assigned teacher & fixed weekly schedule",
-                  "One-time payment — full course, no subscriptions",
-                  "Certificate on completion",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm">
+                {pointKeys.map((p) => (
+                  <li key={p} className="flex items-start gap-2.5 text-sm">
                     <CheckCircle2 size={17} className="text-maroon shrink-0 mt-0.5" />
-                    {item}
+                    {t(`ways.courses.${p}`)}
                   </li>
                 ))}
               </ul>
               <div className="mt-auto pt-5 border-t border-border flex items-center justify-between flex-wrap gap-3">
-                <span className="text-sm text-inkSoft">From ৳999</span>
+                <span className="text-sm text-inkSoft">{t("ways.courses.label")}</span>
                 <button
                   type="button"
                   onClick={() => goTo("/student/courses", { guestPath: "/register" })}
                   className="text-sm font-semibold text-maroon hover:underline"
                 >
-                  Browse courses →
+                  {t("ways.courses.cta")}
                 </button>
               </div>
             </div>
@@ -230,32 +173,26 @@ export default function HomePage() {
               className="bg-[linear-gradient(165deg,var(--color-maroon)_0%,var(--color-maroon-deep)_100%)] text-[#F8E9CE] rounded-2xl p-7 flex flex-col gap-4"
             >
               <span className="inline-flex self-start text-xs font-bold px-3 py-1 rounded-full bg-white/15">
-                Free Classes
+                {t("ways.free.badge")}
               </span>
-              <h3 className="font-display text-xl font-semibold">Open to everyone, no cost to join</h3>
-              <p className="text-[#EAD3B0] text-sm leading-relaxed">
-                Join any weekly session live. A donation box appears at the end — entirely optional.
-              </p>
+              <h3 className="font-display text-xl font-semibold">{t("ways.free.title")}</h3>
+              <p className="text-[#EAD3B0] text-sm leading-relaxed">{t("ways.free.text")}</p>
               <ul className="space-y-2.5 mt-1">
-                {[
-                  "Open to any logged-in member — no purchase needed",
-                  "New sessions added every week",
-                  "Optional donation at the end of class",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm">
+                {pointKeys.map((p) => (
+                  <li key={p} className="flex items-start gap-2.5 text-sm">
                     <CheckCircle2 size={17} className="shrink-0 mt-0.5" />
-                    {item}
+                    {t(`ways.free.${p}`)}
                   </li>
                 ))}
               </ul>
               <div className="mt-auto pt-5 border-t border-white/20 flex items-center justify-between flex-wrap gap-3">
-                <span className="text-sm text-[#EAD3B0]">Free to join</span>
+                <span className="text-sm text-[#EAD3B0]">{t("ways.free.label")}</span>
                 <button
                   type="button"
                   onClick={() => goTo("/student/free-classes")}
                   className="text-sm font-semibold text-ivory hover:underline"
                 >
-                  Join a class →
+                  {t("ways.free.cta")}
                 </button>
               </div>
             </div>
@@ -263,33 +200,26 @@ export default function HomePage() {
             {/* Specific Puja */}
             <div id="specific-puja" className="bg-surface border border-border rounded-2xl p-7 flex flex-col gap-4">
               <span className="inline-flex self-start items-center gap-1.5 text-xs font-bold text-goldDeep bg-goldSoft/30 px-3 py-1 rounded-full">
-                <Flame size={12} /> Specific Puja
+                <Flame size={12} /> {t("ways.specific.badge")}
               </span>
-              <h3 className="font-display text-xl font-semibold">A private puja, just for you</h3>
-              <p className="text-inkSoft text-sm leading-relaxed">
-                Book a one-on-one session — after payment, it&apos;s scheduled individually and
-                conducted privately for you.
-              </p>
+              <h3 className="font-display text-xl font-semibold">{t("ways.specific.title")}</h3>
+              <p className="text-inkSoft text-sm leading-relaxed">{t("ways.specific.text")}</p>
               <ul className="space-y-2.5 mt-1">
-                {[
-                  "One-on-one, not a shared class",
-                  "Scheduled around your availability",
-                  "Conducted by a dedicated teacher",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm">
+                {pointKeys.map((p) => (
+                  <li key={p} className="flex items-start gap-2.5 text-sm">
                     <CheckCircle2 size={17} className="text-maroon shrink-0 mt-0.5" />
-                    {item}
+                    {t(`ways.specific.${p}`)}
                   </li>
                 ))}
               </ul>
               <div className="mt-auto pt-5 border-t border-border flex items-center justify-between flex-wrap gap-3">
-                <span className="text-sm text-inkSoft">Booked separately</span>
+                <span className="text-sm text-inkSoft">{t("ways.specific.label")}</span>
                 <button
                   type="button"
                   onClick={() => goTo("/student/specific-puja")}
                   className="text-sm font-semibold text-maroon hover:underline"
                 >
-                  Book a puja →
+                  {t("ways.specific.cta")}
                 </button>
               </div>
             </div>
@@ -301,26 +231,26 @@ export default function HomePage() {
           <div className="max-w-6xl mx-auto px-5 sm:px-8 py-16 sm:py-20">
             <div className="flex items-end justify-between gap-4 flex-wrap mb-10">
               <div className="max-w-xl">
-                <h2 className="font-display font-semibold text-2xl sm:text-3xl text-ink">Popular courses</h2>
-                <p className="text-inkSoft mt-3">A few of the courses students come back for.</p>
+                <h2 className="font-display font-semibold text-2xl sm:text-3xl text-ink">{t("popular.heading")}</h2>
+                <p className="text-inkSoft mt-3">{t("popular.subtitle")}</p>
               </div>
               <button
                 type="button"
                 onClick={() => goTo("/student/courses", { guestPath: "/register" })}
                 className="text-sm font-semibold text-maroon hover:underline whitespace-nowrap"
               >
-                View all courses →
+                {t("popular.viewAll")}
               </button>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {featuredCourses.map((c) => (
-                <div key={c.title} className="bg-ivory border border-border rounded-xl p-5 flex flex-col gap-3">
+                <div key={c.key} className="bg-ivory border border-border rounded-xl p-5 flex flex-col gap-3">
                   <span className="inline-flex self-start text-xs font-semibold text-maroon bg-[#F7E5E5] px-2.5 py-1 rounded-full">
-                    {c.category}
+                    {t(`popular.items.${c.key}.category`)}
                   </span>
-                  <h3 className="font-display text-lg font-semibold leading-snug">{c.title}</h3>
-                  <p className="text-sm text-inkSoft">{c.teacher}</p>
-                  <p className="text-sm text-inkSoft">{c.schedule}</p>
+                  <h3 className="font-display text-lg font-semibold leading-snug">{t(`popular.items.${c.key}.title`)}</h3>
+                  <p className="text-sm text-inkSoft">{t(`popular.items.${c.key}.teacher`)}</p>
+                  <p className="text-sm text-inkSoft">{t(`popular.items.${c.key}.schedule`)}</p>
                   <div className="mt-auto pt-3 border-t border-border flex items-center justify-between">
                     <span className="font-display text-lg font-semibold">{c.price}</span>
                     <button
@@ -328,7 +258,7 @@ export default function HomePage() {
                       onClick={() => goTo("/student/courses", { guestPath: "/register" })}
                       className="text-xs font-semibold text-maroon hover:underline"
                     >
-                      Enroll →
+                      {t("popular.enroll")}
                     </button>
                   </div>
                 </div>
@@ -340,17 +270,17 @@ export default function HomePage() {
         {/* Teachers */}
         <section className="max-w-6xl mx-auto px-5 sm:px-8 py-16 sm:py-20">
           <div className="max-w-xl mb-12">
-            <h2 className="font-display font-semibold text-2xl sm:text-3xl text-ink">Learn from real teachers</h2>
-            <p className="text-inkSoft mt-3">Every session is taught live — no pre-recorded videos.</p>
+            <h2 className="font-display font-semibold text-2xl sm:text-3xl text-ink">{t("teachers.heading")}</h2>
+            <p className="text-inkSoft mt-3">{t("teachers.subtitle")}</p>
           </div>
           <div className="grid sm:grid-cols-3 gap-6">
-            {teachers.map((t) => (
-              <div key={t.name} className="flex flex-col items-center text-center gap-3 p-6 bg-surface border border-border rounded-xl">
+            {teacherKeys.map((key) => (
+              <div key={key} className="flex flex-col items-center text-center gap-3 p-6 bg-surface border border-border rounded-xl">
                 <div className="w-14 h-14 rounded-full bg-maroon text-ivory flex items-center justify-center font-display font-semibold text-lg">
-                  {t.initials}
+                  {t(`teachers.items.${key}.initials`)}
                 </div>
-                <h3 className="font-display font-semibold">{t.name}</h3>
-                <p className="text-sm text-inkSoft">{t.focus}</p>
+                <h3 className="font-display font-semibold">{t(`teachers.items.${key}.name`)}</h3>
+                <p className="text-sm text-inkSoft">{t(`teachers.items.${key}.focus`)}</p>
               </div>
             ))}
           </div>
@@ -360,15 +290,15 @@ export default function HomePage() {
         <section className="bg-surface border-y border-border">
           <div className="max-w-6xl mx-auto px-5 sm:px-8 py-16 sm:py-20">
             <div className="max-w-xl mb-12">
-              <h2 className="font-display font-semibold text-2xl sm:text-3xl text-ink">What students say</h2>
+              <h2 className="font-display font-semibold text-2xl sm:text-3xl text-ink">{t("reviews.heading")}</h2>
             </div>
             <div className="grid sm:grid-cols-2 gap-6">
-              {testimonials.map((t) => (
-                <blockquote key={t.name} className="bg-ivory border border-border rounded-xl p-6 sm:p-7">
-                  <p className="text-ink text-[0.95rem] leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
+              {reviewKeys.map((key) => (
+                <blockquote key={key} className="bg-ivory border border-border rounded-xl p-6 sm:p-7">
+                  <p className="text-ink text-[0.95rem] leading-relaxed">&ldquo;{t(`reviews.items.${key}.quote`)}&rdquo;</p>
                   <footer className="mt-5 text-sm">
-                    <span className="font-semibold text-ink">{t.name}</span>
-                    <span className="text-inkSoft"> · {t.role}</span>
+                    <span className="font-semibold text-ink">{t(`reviews.items.${key}.name`)}</span>
+                    <span className="text-inkSoft"> · {t(`reviews.items.${key}.role`)}</span>
                   </footer>
                 </blockquote>
               ))}
@@ -379,27 +309,19 @@ export default function HomePage() {
         {/* Trust strip */}
         <section className="max-w-6xl mx-auto px-5 sm:px-8 py-14 sm:py-16">
           <div className="grid sm:grid-cols-3 gap-8 text-center sm:text-left">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3">
-              <BookOpen size={22} className="text-maroon shrink-0" />
-              <div>
-                <h4 className="font-display font-semibold">Structured curriculum</h4>
-                <p className="text-sm text-inkSoft mt-1">Every course follows a clear syllabus, not ad-hoc sessions.</p>
+            {[
+              { key: "curriculum", Icon: BookOpen },
+              { key: "live", Icon: Users },
+              { key: "language", Icon: Globe2 },
+            ].map(({ key, Icon }) => (
+              <div key={key} className="flex flex-col sm:flex-row items-center sm:items-start gap-3">
+                <Icon size={22} className="text-maroon shrink-0" />
+                <div>
+                  <h4 className="font-display font-semibold">{t(`trust.${key}.title`)}</h4>
+                  <p className="text-sm text-inkSoft mt-1">{t(`trust.${key}.text`)}</p>
+                </div>
               </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3">
-              <Users size={22} className="text-maroon shrink-0" />
-              <div>
-                <h4 className="font-display font-semibold">Real, live teachers</h4>
-                <p className="text-sm text-inkSoft mt-1">Ask questions in the moment — nothing pre-recorded.</p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3">
-              <Globe2 size={22} className="text-maroon shrink-0" />
-              <div>
-                <h4 className="font-display font-semibold">Learn in your language</h4>
-                <p className="text-sm text-inkSoft mt-1">Hindi, Bangla, or English — switch anytime.</p>
-              </div>
-            </div>
+            ))}
           </div>
         </section>
 
@@ -409,11 +331,9 @@ export default function HomePage() {
             <div>
               <div className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--sidebar-active)] mb-3 justify-center lg:justify-start">
                 <Heart size={16} />
-                Free to join
+                {t("cta.badge")}
               </div>
-              <h2 className="font-display text-2xl sm:text-3xl font-semibold max-w-md">
-                Ready to start? Your first class is free.
-              </h2>
+              <h2 className="font-display text-2xl sm:text-3xl font-semibold max-w-md">{t("cta.title")}</h2>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 shrink-0">
               <button
@@ -421,13 +341,13 @@ export default function HomePage() {
                 onClick={() => goTo("/student", { guestPath: "/register" })}
                 className="bg-[var(--sidebar-active)] text-[#2B1B0E] text-sm font-semibold px-6 py-3.5 rounded-lg text-center hover:opacity-90 transition"
               >
-                Create free account
+                {t("cta.create")}
               </button>
               <Link
                 href="/login"
                 className="border border-white/25 text-[var(--sidebar-ink)] text-sm font-semibold px-6 py-3.5 rounded-lg text-center hover:bg-white/5 transition-colors"
               >
-                Log in
+                {t("cta.login")}
               </Link>
             </div>
           </div>
