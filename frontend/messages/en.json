@@ -2,159 +2,188 @@
   "meta": {
     "siteName": "Karmkand Bharti",
     "tagline": "Learn Hindu Puja & Rituals Live",
-    "description": "Learn authentic Hindu puja, rituals, and Vedic practices through live online classes — subscription courses, free weekly sessions, and one-on-one specific puja bookings."
+    "description": "Learn authentic Hindu puja, rituals, and Vedic traditions through live online classes: subscription courses, free weekly sessions, and personal specific puja bookings."
   },
   "lang": {
     "label": "Change language"
   },
   "home": {
     "hero": {
-      "badge": "Live virtual sessions, guided by real teachers",
-      "title": "Learn puja the way it was meant to be taught",
-      "subtitle": "Structured courses, open community classes, and one-on-one personal puja — all conducted live online, in Hindi, Bangla, or English.",
+      "badge": "Live online classes with real gurus",
+      "title": "Learn puja, the way it was meant to be taught",
+      "subtitle": "Structured courses, open classes for everyone, and personal puja — all live online, in Hindi, Bengali, or English.",
       "browse": "Browse Courses",
       "freeClass": "Join a Free Class",
-      "todayClass": "Today at 7:00 PM — Ganesh Puja basics (Free)"
+      "todayClass": "Today 7:00 PM: Basics of Ganesh Puja (Free)",
+      "trust1": "Secure payments",
+      "trust2": "4.9/5 rating",
+      "trust3": "3 languages"
     },
     "stats": {
-      "courses": "Guided courses",
-      "students": "Students taught",
-      "sessions": "Weekly free sessions",
-      "languages": "Languages supported"
+      "courses": "Guided Courses",
+      "students": "Students Taught",
+      "sessions": "Weekly Free Sessions",
+      "languages": "Languages Supported"
     },
     "how": {
-      "heading": "How it works",
-      "subtitle": "Three simple steps, whether you're joining a free session or enrolling in a full course.",
+      "eyebrow": "Simple process",
+      "heading": "How It Works",
+      "subtitle": "Three easy steps, whether you join a free session or enroll in a full course.",
       "steps": {
         "choose": {
-          "title": "Choose your path",
-          "text": "Enroll in a full course, drop into a free class, or book a specific puja just for you."
+          "title": "Choose Your Path",
+          "text": "Take a full course, join a free class, or book a specific puja just for you."
         },
         "meet": {
-          "title": "Meet your teacher live",
-          "text": "Every session runs as a real-time video class — ask questions and follow along as you go."
+          "title": "Meet Your Guru Live",
+          "text": "Every session is a real-time video class. Ask questions and learn together."
         },
         "track": {
-          "title": "Track your progress",
-          "text": "Finish a course and get a certificate. Keep returning to free classes any week you like."
+          "title": "Track Your Progress",
+          "text": "Earn certificates on course completion. Return to free classes any week."
         }
       }
     },
     "ways": {
-      "heading": "Three ways to learn",
-      "subtitle": "Structured guidance for the dedicated student, an open door for anyone curious, and a private option for something just for you.",
+      "eyebrow": "Three paths to learn",
+      "heading": "Three Ways to Learn",
+      "subtitle": "Structured guidance for dedicated students, an open door for the curious, and a personal option just for you.",
       "courses": {
         "badge": "Subscription Courses",
-        "title": "A full guided course, start to finish",
-        "text": "Enroll once, get a fixed teacher and schedule, and learn a puja tradition end to end.",
-        "p1": "Assigned teacher & fixed weekly schedule",
-        "p2": "One-time payment — full course, no subscriptions",
-        "p3": "Certificate on completion",
-        "label": "From ৳999",
-        "cta": "Browse courses →"
+        "title": "Full guided course from start to finish",
+        "text": "Enroll once, get a fixed guru and schedule, and learn the puja tradition thoroughly.",
+        "p1": "Assigned guru and weekly schedule",
+        "p2": "Pay once, full course, no subscription",
+        "p3": "Certificate upon completion",
+        "label": "Starting from ₹999",
+        "cta": "Browse Courses"
       },
       "free": {
         "badge": "Free Classes",
         "title": "Open to everyone, no cost to join",
-        "text": "Join any weekly session live. A donation box appears at the end — entirely optional.",
-        "p1": "Open to any logged-in member — no purchase needed",
+        "text": "Join any weekly session live. At the end a donation box appears — completely optional.",
+        "p1": "Open to any logged-in member, no purchase required",
         "p2": "New sessions added every week",
-        "p3": "Optional donation at the end of class",
+        "p3": "Optional donation at class end",
         "label": "Free to join",
-        "cta": "Join a class →"
+        "cta": "Join a Class"
       },
       "specific": {
         "badge": "Specific Puja",
-        "title": "A private puja, just for you",
-        "text": "Book a one-on-one session — after payment, it's scheduled individually and conducted privately for you.",
-        "p1": "One-on-one, not a shared class",
-        "p2": "Scheduled around your availability",
-        "p3": "Conducted by a dedicated teacher",
+        "title": "A private puja just for you",
+        "text": "Book a one-on-one session. After payment it's scheduled separately and performed privately for you.",
+        "p1": "One-on-one, no shared class",
+        "p2": "Scheduled at your convenience",
+        "p3": "Performed by a dedicated guru",
         "label": "Booked separately",
-        "cta": "Book a puja →"
+        "cta": "Book a Puja"
       }
     },
     "popular": {
-      "heading": "Popular courses",
-      "subtitle": "A few of the courses students come back for.",
-      "viewAll": "View all courses →",
-      "enroll": "Enroll →",
+      "eyebrow": "Student favorites",
+      "heading": "Popular Courses",
+      "subtitle": "Courses students come back for, again and again.",
+      "viewAll": "View All Courses",
+      "enroll": "Enroll Now",
+      "lessons": "lessons",
+      "hours": "hours",
+      "students": "students",
       "items": {
         "griha": {
-          "title": "Griha Pravesh Puja Basics",
+          "title": "Basics of Griha Pravesh Puja",
           "teacher": "Pandit R. Sharma",
-          "category": "Griha Puja",
+          "category": "Home Puja",
           "schedule": "Mon, Wed · 6:00 PM"
         },
         "durga": {
-          "title": "Durga Puja Rituals for Families",
+          "title": "Durga Puja Vidhi for Families",
           "teacher": "Pandit K. Joshi",
           "category": "Festival Puja",
           "schedule": "Tue, Thu · 7:00 PM"
         },
         "everyday": {
-          "title": "Everyday Puja & Aarti",
+          "title": "Daily Puja and Aarti",
           "teacher": "Pandit S. Chatterjee",
-          "category": "Everyday Rituals",
+          "category": "Daily Rituals",
           "schedule": "Sat · 9:00 AM"
         }
       }
     },
     "teachers": {
-      "heading": "Learn from real teachers",
+      "eyebrow": "Expert instructors",
+      "heading": "Learn from Real Gurus",
       "subtitle": "Every session is taught live — no pre-recorded videos.",
       "items": {
         "sharma": {
           "name": "Pandit R. Sharma",
           "focus": "Griha Puja & Vedic Basics",
-          "initials": "RS"
+          "initials": "RS",
+          "rating": "4.9",
+          "experience": "18 yrs exp"
         },
         "joshi": {
           "name": "Pandit K. Joshi",
           "focus": "Festival Puja & Family Rituals",
-          "initials": "KJ"
+          "initials": "KJ",
+          "rating": "4.8",
+          "experience": "15 yrs exp"
         },
         "chatterjee": {
           "name": "Pandit S. Chatterjee",
-          "focus": "Everyday Puja & Mantras",
-          "initials": "SC"
+          "focus": "Daily Puja & Mantras",
+          "initials": "SC",
+          "rating": "5.0",
+          "experience": "22 yrs exp"
         }
       }
     },
     "reviews": {
-      "heading": "What students say",
+      "eyebrow": "Testimonials",
+      "heading": "What Students Say",
       "items": {
         "ritika": {
-          "quote": "I grew up watching my grandmother perform Griha Pravesh but never learned the steps myself. This course finally gave me the confidence to do it for my own home.",
+          "quote": "I watched my grandmother perform Griha Pravesh as a child but never learned the vidhi myself. This course finally gave me the confidence to do it for my own home.",
           "name": "Ritika Sharma",
-          "role": "Student, Griha Pravesh Puja Basics"
+          "role": "Student, Basics of Griha Pravesh Puja",
+          "initials": "RS",
+          "location": "Mumbai"
         },
         "abir": {
-          "quote": "The free classes are a wonderful way to try things out before committing. I joined on a whim and ended up learning mantras I still use every morning.",
+          "quote": "Free classes are a great way to try before committing to a course. I joined on a whim and learned mantras I still chant every morning.",
           "name": "Abir Hasan",
-          "role": "Free Class participant"
+          "role": "Free Class Participant",
+          "initials": "AH",
+          "location": "Kolkata"
+        },
+        "sanjay": {
+          "quote": "The personal puja booking was flawless. Panditji performed it with so much devotion — my whole family felt the spiritual energy.",
+          "name": "Sanjay Verma",
+          "role": "Specific Puja Client",
+          "initials": "SV",
+          "location": "Delhi"
         }
       }
     },
     "trust": {
       "curriculum": {
-        "title": "Structured curriculum",
+        "title": "Structured Curriculum",
         "text": "Every course follows a clear syllabus, not ad-hoc sessions."
       },
       "live": {
-        "title": "Real, live teachers",
-        "text": "Ask questions in the moment — nothing pre-recorded."
+        "title": "Real, Live Gurus",
+        "text": "Ask questions in real time — nothing pre-recorded."
       },
       "language": {
-        "title": "Learn in your language",
-        "text": "Hindi, Bangla, or English — switch anytime."
+        "title": "Learn in Your Language",
+        "text": "Hindi, Bengali, or English — switch anytime."
       }
     },
     "cta": {
       "badge": "Free to join",
       "title": "Ready to start? Your first class is free.",
-      "create": "Create free account",
-      "login": "Log in"
+      "subtitle": "Create your free account and join a live session today.",
+      "create": "Create Free Account",
+      "login": "Log In"
     }
   },
   "nav": {
@@ -166,5 +195,163 @@
   },
   "footer": {
     "rights": "All rights reserved"
+  },
+  "login": {
+    "heading": "Welcome back",
+    "subheading": "Log in to continue your learning journey.",
+    "or": "or",
+    "remember": "Remember me",
+    "noAccount": "New here?",
+    "registerLink": "Create an account",
+    "email": {
+      "label": "Email",
+      "placeholder": "you@example.com"
+    },
+    "password": {
+      "label": "Password",
+      "placeholder": "••••••••",
+      "forgot": "Forgot password?",
+      "show": "Show password",
+      "hide": "Hide password"
+    },
+    "button": {
+      "submit": "Log In",
+      "loading": "Logging in..."
+    },
+    "error": {
+      "generic": "Something went wrong. Please try again."
+    },
+    "toast": {
+      "success": "Login successful",
+      "error": "Login failed",
+      "welcome": "Welcome back, {name}!"
+    },
+    "brand": {
+      "badge": "Live online classes with real gurus",
+      "title": "Learn puja, the way it was meant to be taught.",
+      "subtitle": "Live courses, open community classes, and personal puja sessions — guided by real teachers.",
+      "feature1": "Structured courses with certification",
+      "feature2": "Live classes with real gurus",
+      "feature3": "Secure payments & privacy protected",
+      "ratedBy": "Rated 4.9 by 1,200+ students",
+      "review1": "Finally learned Griha Pravesh with confidence for my own home.",
+      "review2": "Free classes helped me learn mantras I chant every morning."
+    },
+    "trust": {
+      "secure": "Secure login",
+      "users": "1,200+ students"
+    }
+  },
+  "register": {
+    "heading": "Create your account",
+    "subheading": "Free to join — start with any open class.",
+    "or": "or",
+    "agreePrefix": "I agree to the",
+    "termsLink": "Terms of Service",
+    "and": "and",
+    "privacyLink": "Privacy Policy",
+    "haveAccount": "Already have an account?",
+    "loginLink": "Log in",
+    "name": {
+      "label": "Full name",
+      "placeholder": "Your name"
+    },
+    "email": {
+      "label": "Email",
+      "placeholder": "you@example.com"
+    },
+    "phone": {
+      "label": "Phone",
+      "optional": "optional",
+      "placeholder": "+91 98765 43210"
+    },
+    "password": {
+      "label": "Password",
+      "placeholder": "At least 6 characters",
+      "show": "Show password",
+      "hide": "Hide password",
+      "weak": "Weak",
+      "fair": "Fair",
+      "strong": "Strong"
+    },
+    "button": {
+      "submit": "Create Account",
+      "loading": "Creating account..."
+    },
+    "error": {
+      "passwordLength": "Password must be at least 6 characters",
+      "agreeTerms": "Please agree to the Terms & Privacy Policy",
+      "generic": "Something went wrong. Please try again."
+    },
+    "toast": {
+      "success": "Account created!",
+      "error": "Registration failed",
+      "welcome": "Welcome, {name}!"
+    },
+    "brand": {
+      "badge": "Free to join — no credit card needed",
+      "title": "Start learning puja, live and guided.",
+      "subtitle": "Join free classes right away, or enroll in a full course whenever you're ready.",
+      "perk1": "Live classes with real gurus",
+      "perk2": "Learn with a global community",
+      "perk3": "Free weekly open sessions",
+      "perk4": "Certificates on course completion",
+      "ratedBy": "Rated 4.9 by 1,200+ students",
+      "review1": "Finally learned Griha Pravesh with confidence for my own home.",
+      "review2": "Free classes helped me learn mantras I chant every morning."
+    },
+    "trust": {
+      "secure": "Secure signup",
+      "users": "1,200+ students"
+    }
+  },
+  "forgotPassword": {
+    "backToLogin": "Back to login",
+    "heading": "Forgot your password?",
+    "subheading": "No worries — enter your email and we'll send a reset link.",
+    "email": {
+      "label": "Email",
+      "placeholder": "you@example.com"
+    },
+    "button": {
+      "submit": "Send Reset Link",
+      "loading": "Sending..."
+    },
+    "help": {
+      "text": "You'll receive an email within a few minutes. Check your spam folder if you don't see it."
+    },
+    "success": {
+      "heading": "Check your email",
+      "subheading1": "If an account exists for",
+      "subheading2": ", a reset link is on its way.",
+      "tipTitle": "Didn't get the email?",
+      "tipText": "It may take a few minutes. Check your spam folder, or try again with a different email.",
+      "resend": "Resend email",
+      "sending": "Sending...",
+      "differentEmail": "Use different email",
+      "backToLogin": "Back to login"
+    },
+    "error": {
+      "generic": "Something went wrong. Please try again."
+    },
+    "toast": {
+      "success": "Reset link sent",
+      "error": "Failed to send reset link",
+      "resent": "Reset link resent",
+      "checkEmail": "Check your inbox at {email}"
+    },
+    "brand": {
+      "badge": "Account recovery",
+      "title": "Locked out happens to everyone.",
+      "subtitle": "Enter your email and we'll send you a link to get back into your account.",
+      "step1": "Check your email for the reset link",
+      "step2": "Click the link to set a new password",
+      "step3": "Log in with your new password",
+      "securityNote": "Reset links expire in 30 minutes for your security. Never share them with anyone."
+    },
+    "trust": {
+      "secure": "Secure process",
+      "fast": "Quick recovery"
+    }
   }
 }

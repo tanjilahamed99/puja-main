@@ -10,34 +10,34 @@
      updates everywhere it's used — sidebar, buttons, badges,
      tables, borders, etc.
      ============================================================ */
-  --color-ivory: #FBF3DF;
-  --color-ivory-soft: #F6EAC9;
-  --color-surface: #FFFDF6;
-  --color-border: #E7D9B8;
+  --color-ivory: #fbf3df;
+  --color-ivory-soft: #f6eac9;
+  --color-surface: #fffdf6;
+  --color-border: #e7d9b8;
 
-  --color-ink: #2B1B0E;
-  --color-ink-soft: #6B573C;
+  --color-ink: #2b1b0e;
+  --color-ink-soft: #6b573c;
 
-  --color-gold: #D9A027;
-  --color-gold-deep: #B9791A;
-  --color-gold-soft: #F4C86A;
+  --color-gold: #d9a027;
+  --color-gold-deep: #b9791a;
+  --color-gold-soft: #f4c86a;
 
-  --color-maroon: #8C2F1B;
-  --color-maroon-deep: #6E2113;
+  --color-maroon: #8c2f1b;
+  --color-maroon-deep: #6e2113;
 
-  --color-success: #3F7D4F;
-  --color-danger: #B23B3B;
-  --color-warning: #C68A1B;
+  --color-success: #3f7d4f;
+  --color-danger: #b23b3b;
+  --color-warning: #c68a1b;
 
   /* Sidebar keeps its own tokens so it can stay dark even if the
      main surface theme changes later. */
-  --sidebar-bg: #2B1B0E;
-  --sidebar-ink: #F3E6C9;
-  --sidebar-ink-soft: #C9B491;
-  --sidebar-active: #D9A027;
+  --sidebar-bg: #2b1b0e;
+  --sidebar-ink: #f3e6c9;
+  --sidebar-ink-soft: #c9b491;
+  --sidebar-active: #d9a027;
 
-  --font-display: 'Eczar', Georgia, 'Times New Roman', serif;
-  --font-body: 'Mukta', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: "Eczar", Georgia, "Times New Roman", serif;
+  --font-body: "Mukta", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 * {
@@ -67,4 +67,113 @@ body {
     transition: none !important;
     animation: none !important;
   }
+}
+
+/* ═══════════ CUSTOM ANIMATIONS ═══════════ */
+
+@keyframes flicker {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.03) translateY(-2px);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.animate-flicker {
+  animation: flicker 3s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Gradient text for headings (optional) */
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-maroon), var(--color-gold));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .animate-flicker,
+  .animate-float {
+    animation: none;
+  }
+}
+
+/* Selection color */
+::selection {
+  background-color: var(--color-maroon);
+  color: var(--color-ivory);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-from-top {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.slide-in-from-top-2 {
+  animation: slide-in-from-top 0.3s ease-out;
 }
