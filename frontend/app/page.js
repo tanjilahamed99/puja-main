@@ -124,7 +124,7 @@ export default function HomePage() {
                 </button>
               </div>
 
-              {/* Trust badges */}
+              {/* Trust badge */}
               <div className="flex flex-wrap items-center gap-4 mt-8 text-xs text-inkSoft">
                 <div className="flex items-center gap-1.5">
                   <Shield size={14} className="text-green-600" />
