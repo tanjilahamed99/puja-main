@@ -114,20 +114,17 @@ export const updatePujaBooking = (id, data) => {
 
 // ---------------- Payments & Donations ----------------
 
-export const getPayments = () => {
-  return API.get("/admin/payments");
-};
-
-export const getPaymentSummary = () => {
-  return API.get("/admin/payments/summary");
-};
-
 export const getDonations = () => {
   return API.get("/admin/payments/donations");
 };
-export const getPaymentDonations = () => {
-  return API.get("/admin/payments/donations");
-};
+
+export const getPayments = (params = {}) =>
+  API.get("/admin/payments", { params });
+
+export const getPaymentDonations = (params = {}) =>
+  API.get("/admin/payments/donations", { params });
+
+export const getPaymentSummary = () => API.get("/admin/payments/summary");
 
 // ---------------- Dashboard ----------------
 
