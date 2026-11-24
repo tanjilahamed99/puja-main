@@ -2,15 +2,40 @@ const asyncHandler = require("../utils/asyncHandler");
 const makeRoomId = require("../utils/makeRoomId");
 const SpecificPujaPackage = require("../models/SpecificPujaPackage");
 const SpecificPujaBooking = require("../models/SpecificPujaBooking");
+const User = require("../models/User");
 
-// ---- Packages ----
+/* ─────────────── helpers ─────────────── */
+
+function clampInt(v, def, min = 1, max = 100) {
+  const n = parseInt(v, 10);
+  if (Number.isNaN(n)) return def;
+  return Math.min(max, Math.max(min, n));
+}
+
+/* ─────────────── Packages ─────────────── */
 
 // @route GET /api/admin/specific-puja/packages
+// Supports: ?page=&limit=&search=&status=
 const getPackages = asyncHandler(async (req, res) => {
-  const packages = await SpecificPujaPackage.find()
-    .populate("teacher", "name email")
-    .sort({ createdAt: -1 });
-  res.json({ packages });
+  const { search, status } = req.query;
+  const page = clampInt(req.query.page, 1, 1, 10_000);
+  const limit = clampInt(req.query.limit, 20, 1, 100);
+
+  const match = {};
+  if (status) match.status = status;
+  if (search) match.name = new RegExp(search.trim(), "i");
+
+  const [items, total] = await Promise.all([
+    SpecificPujaPackage.find(match)
+      .populate("teacher", "name email")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit),
+    SpecificPujaPackage.countDocuments(match),
+  ]);
+
+  // `packages` kept for backward compatibility; `items` is the paginated shape
+  res.json({ items, total, page, limit, packages: items });
 });
 
 const createPackage = asyncHandler(async (req, res) => {
@@ -91,12 +116,44 @@ const deletePackage = asyncHandler(async (req, res) => {
   res.json({ message: "Puja package deleted" });
 });
 
+/* ─────────────── Bookings ─────────────── */
+
+// @route GET /api/admin/specific-puja/bookings
+// Supports: ?page=&limit=&search=&status=
 const getBookings = asyncHandler(async (req, res) => {
-  const bookings = await SpecificPujaBooking.find()
-    .populate("package", "name price")
-    .populate("user", "name email")
-    .sort({ createdAt: -1 });
-  res.json({ bookings });
+  const { status, search } = req.query;
+  const page = clampInt(req.query.page, 1, 1, 10_000);
+  const limit = clampInt(req.query.limit, 20, 1, 100);
+
+  const match = {};
+  if (status) match.status = status;
+
+  if (search) {
+    const rx = new RegExp(search.trim(), "i");
+    const users = await User.find(
+      { $or: [{ name: rx }, { email: rx }] },
+      { _id: 1 },
+    ).limit(1000);
+    const ids = users.map((u) => u._id);
+    if (ids.length) {
+      match.user = { $in: ids };
+    } else {
+      // No user matched — force empty, since search is only on user name/email
+      match._id = { $in: [] };
+    }
+  }
+
+  const [items, total] = await Promise.all([
+    SpecificPujaBooking.find(match)
+      .populate("package", "name price durationMinutes")
+      .populate("user", "name email")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit),
+    SpecificPujaBooking.countDocuments(match),
+  ]);
+
+  res.json({ items, total, page, limit, bookings: items });
 });
 
 const updateBooking = asyncHandler(async (req, res) => {

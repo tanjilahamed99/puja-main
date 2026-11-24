@@ -16,14 +16,6 @@ export const getUpcomingSchedule = () => {
   return API.get("/teacher/schedule/upcoming");
 };
 
-export const getMyPujaBookings = () => {
-  return API.get("/teacher/specific-puja/bookings");
-};
-
-export const getMyPujaBooking = (id) => {
-  return API.get(`/teacher/specific-puja/bookings/${id}`);
-};
-
 export const completePujaBooking = (bookingId) => {
   return API.patch(`/teacher/specific-puja/bookings/${bookingId}/complete`);
 };
@@ -39,3 +31,12 @@ export const getPujaBookingLiveKitToken = (bookingId) =>
 
 export const startPujaBooking = (bookingId) =>
   API.post(`/teacher/specific-puja/bookings/${bookingId}/start`);
+
+export const getMyPujaPackages = (params = {}) =>
+  API.get("/teacher/specific-puja/packages", { params });
+
+export const getMyPujaBookings = (params = {}) =>
+  API.get("/teacher/specific-puja/bookings", { params });
+
+export const getMyPujaBooking = (id) =>
+  API.get(`/teacher/specific-puja/bookings/${id}`);

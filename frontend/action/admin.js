@@ -27,10 +27,8 @@ export const deleteUser = (id) => {
 };
 
 // ---------------- Courses ----------------
-
-export const getCourses = () => {
-  return API.get("/admin/courses");
-};
+export const getCourses = (params = {}) =>
+  API.get("/admin/courses", { params });
 
 export const getCourse = (id) => {
   return API.get(`/admin/courses/${id}`);
@@ -88,10 +86,6 @@ export const getFreeClassDonations = (id) => {
 
 // ---------------- Specific Puja ----------------
 
-export const getPujaPackages = () => {
-  return API.get("/admin/specific-puja/packages");
-};
-
 export const createPujaPackage = (data) => {
   return API.post("/admin/specific-puja/packages", data);
 };
@@ -102,10 +96,6 @@ export const updatePujaPackage = (id, data) => {
 
 export const deletePujaPackage = (id) => {
   return API.delete(`/admin/specific-puja/packages/${id}`);
-};
-
-export const getPujaBookings = () => {
-  return API.get("/admin/specific-puja/bookings");
 };
 
 export const updatePujaBooking = (id, data) => {
@@ -169,6 +159,12 @@ export const completePujaBooking = (id) => {
     status: "completed",
   });
 };
+
+export const getPujaPackages = (params = {}) =>
+  API.get("/admin/specific-puja/packages", { params });
+
+export const getPujaBookings = (params = {}) =>
+  API.get("/admin/specific-puja/bookings", { params });
 
 // settings
 

@@ -12,6 +12,7 @@ const { createLiveKitToken } = require("../utils/livekit");
 const { evaluateJoinability } = require("../utils/pujaSession");
 const { evaluateFreeClassJoinability } = require("../utils/freeClassSession");
 const { evaluateCourseJoinability } = require("../utils/courseSession");
+const { zonedTimeToUtc } = require("../utils/timezone");
 
 // @route GET /api/student/courses — browse active courses
 exports.browseCourses = asyncHandler(async (req, res) => {
@@ -413,25 +414,37 @@ exports.bookPujaPackage = asyncHandler(async (req, res) => {
   }
 
   // ---- Prevent double-booking the same teacher in an overlapping window ----
-  if (pkg.teacher) {
-    const duration = pkg.durationMinutes || 60;
-    const windowStart = new Date(proposed.getTime() - duration * 60 * 1000);
-    const windowEnd = new Date(proposed.getTime() + duration * 60 * 1000);
+// controllers/studentController.js (inside bookPujaPackage, replace the conflict block)
 
-    const conflict = await SpecificPujaBooking.findOne({
-      package: {
-        $in: await SpecificPujaPackage.find({ teacher: pkg.teacher }).distinct(
-          "_id",
-        ),
+if (pkg.teacher) {
+  const duration = pkg.durationMinutes || 60;
+  const windowStart = new Date(proposed.getTime() - duration * 60 * 1000);
+  const windowEnd = new Date(proposed.getTime() + duration * 60 * 1000);
+
+  const conflict = await SpecificPujaBooking.findOne({
+    package: {
+      $in: await SpecificPujaPackage.find({
+        teacher: pkg.teacher,
+      }).distinct("_id"),
+    },
+    status: { $in: ["pending", "confirmed"] },
+    scheduledDateTime: { $gt: windowStart, $lt: windowEnd },
+  });
+
+  if (conflict) {
+    res.status(409);
+    // Send a machine-readable response so the frontend can auto-refresh the slot list
+    return res.json({
+      message:
+        "That time slot has just been booked by someone else. Please pick another time.",
+      conflict: {
+        scheduledDateTime: conflict.scheduledDateTime,
+        durationMinutes: conflict.durationMinutes,
       },
-      status: { $in: ["pending", "confirmed"] },
-      scheduledDateTime: { $gt: windowStart, $lt: windowEnd },
+      refreshSlots: true,
     });
-    if (conflict) {
-      res.status(409);
-      throw new Error("That time slot is already booked. Please pick another.");
-    }
   }
+}
 
   // ---- Payment (unchanged — still assumes gateway confirmed client-side) ----
   const payment = await Payment.create({
@@ -519,8 +532,9 @@ exports.getPujaBookingLiveKitToken = asyncHandler(async (req, res) => {
   });
 });
 
+// controllers/studentController.js (specific puja section only)
+
 // @route GET /api/student/specific-puja/packages/:id/slots
-// Returns available hourly slots for the next N days, excluding conflicts.
 exports.getPujaPackageSlots = asyncHandler(async (req, res) => {
   const pkg = await SpecificPujaPackage.findOne({
     _id: req.params.id,
@@ -532,14 +546,14 @@ exports.getPujaPackageSlots = asyncHandler(async (req, res) => {
   }
 
   const duration = pkg.durationMinutes || 60;
-  const stepMinutes = 60; // hour-by-hour slots
+  const stepMinutes = 60;
   const days = Math.min(pkg.maxLeadTimeDays ?? 60, 30);
   const leadHours = pkg.minLeadTimeHours ?? 24;
 
-  // Pull existing bookings for this teacher's packages in the window
   const pkgIds = await SpecificPujaPackage.find({
     teacher: pkg.teacher,
   }).distinct("_id");
+
   const windowStart = new Date(Date.now() + leadHours * 3600 * 1000);
   const windowEnd = new Date(Date.now() + days * 24 * 3600 * 1000);
 
@@ -558,34 +572,56 @@ exports.getPujaPackageSlots = asyncHandler(async (req, res) => {
       (b.durationMinutes || 60) * 60_000,
   }));
 
-  // Build slot list
+  // Build slots in the package's timezone so everyone sees the same wall-clock time.
+  const tz = pkg.timezone || "Asia/Kolkata";
   const slots = [];
-  for (
-    let d = new Date(windowStart);
-    d <= windowEnd;
-    d.setDate(d.getDate() + 1)
-  ) {
-    // Skip disallowed days if preferredDays is set
-    if (pkg.preferredDays?.length && !pkg.preferredDays.includes(d.getDay()))
-      continue;
 
-    // Simple 8 AM – 8 PM local window (adjust using pkg.timezone if needed)
-    for (let hour = 8; hour <= 20; hour += stepMinutes / 60) {
-      const slotStart = new Date(d);
-      slotStart.setHours(hour, 0, 0, 0);
-      if (slotStart.getTime() < windowStart.getTime()) continue;
+  // Iterate day-by-day from windowStart to windowEnd in the priest's TZ
+  const cursor = new Date(windowStart);
+  const endTime = windowEnd.getTime();
 
-      const slotEnd = slotStart.getTime() + duration * 60_000;
-      const overlaps = busyWindows.some(
-        (w) => slotStart.getTime() < w.end && slotEnd > w.start,
-      );
-      if (overlaps) continue;
+  while (cursor.getTime() <= endTime) {
+    // Local time in target TZ for this calendar day
+    const localStr = cursor.toLocaleString("en-US", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }); // MM/DD/YYYY
 
-      slots.push(slotStart.toISOString());
+    const [mm, dd, yyyy] = localStr.split("/").map(Number);
+    const localDateUTC = new Date(Date.UTC(yyyy, mm - 1, dd));
+
+    const dayOfWeek = localDateUTC.getUTCDay(); // 0..6 in local
+
+    if (!pkg.preferredDays?.length || pkg.preferredDays.includes(dayOfWeek)) {
+      // 08:00 → 20:00 local, hour-by-hour
+      for (let hour = 8; hour <= 20; hour += stepMinutes / 60) {
+        // Compose a UTC instant for "hour:00 local on this date"
+        const slotLocalStr = `${yyyy}-${String(mm).padStart(2, "0")}-${String(
+          dd,
+        ).padStart(2, "0")}T${String(hour).padStart(2, "0")}:00:00`;
+
+        // Resolve it to an absolute instant using Intl's timezone
+        const slotInstant = zonedTimeToUtc(slotLocalStr, tz);
+
+        if (slotInstant < windowStart.getTime()) continue;
+        if (slotInstant > endTime) continue;
+
+        const slotEnd = slotInstant + duration * 60_000;
+        const overlaps = busyWindows.some(
+          (w) => slotInstant < w.end && slotEnd > w.start,
+        );
+        if (overlaps) continue;
+
+        slots.push(new Date(slotInstant).toISOString());
+      }
     }
+
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
 
-  res.json({ slots, timezone: pkg.timezone, durationMinutes: duration });
+  res.json({ slots, timezone: tz, durationMinutes: duration });
 });
 
 // ---------------- Certificates ----------------

@@ -10,6 +10,12 @@ const { evaluateFreeClassJoinability } = require("../utils/freeClassSession");
 const { evaluateJoinability } = require("../utils/pujaSession");
 const { evaluateCourseJoinability } = require("../utils/courseSession");
 
+function clampInt(v, def, min = 1, max = 100) {
+  const n = parseInt(v, 10);
+  if (Number.isNaN(n)) return def;
+  return Math.min(max, Math.max(min, n));
+}
+
 // @route GET /api/teacher/courses
 exports.getMyCourses = asyncHandler(async (req, res) => {
   const courses = await Course.find({ teacher: req.user._id }).sort({
@@ -275,21 +281,44 @@ exports.endFreeClassSession = asyncHandler(async (req, res) => {
 
 // @route GET /api/teacher/specific-puja/bookings
 // LIST — returns all bookings for packages owned by this teacher.
+// @route GET /api/teacher/specific-puja/bookings
+// LIST — returns all bookings for packages owned by this teacher (paginated).
 exports.getMyPujaBookings = asyncHandler(async (req, res) => {
+  const { status, search } = req.query;
+  const page = clampInt(req.query.page, 1, 1, 10_000);
+  const limit = clampInt(req.query.limit, 20, 1, 100);
+
   const myPackages = await SpecificPujaPackage.find({
     teacher: req.user._id,
   }).select("_id");
-
   const packageIds = myPackages.map((p) => p._id);
 
-  const bookings = await SpecificPujaBooking.find({
-    package: { $in: packageIds },
-  })
-    .populate("package", "name price durationMinutes")
-    .populate("user", "name email")
-    .sort({ scheduledDateTime: 1 });
+  const match = { package: { $in: packageIds } };
+  if (status) match.status = status;
 
-  const enriched = bookings.map((b) => {
+  if (search) {
+    const User = require("../models/User");
+    const rx = new RegExp(search.trim(), "i");
+    const users = await User.find(
+      { $or: [{ name: rx }, { email: rx }] },
+      { _id: 1 }
+    ).limit(1000);
+    const ids = users.map((u) => u._id);
+    if (ids.length) match.user = { $in: ids };
+    else match._id = { $in: [] };
+  }
+
+  const [items, total] = await Promise.all([
+    SpecificPujaBooking.find(match)
+      .populate("package", "name price durationMinutes")
+      .populate("user", "name email")
+      .sort({ scheduledDateTime: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit),
+    SpecificPujaBooking.countDocuments(match),
+  ]);
+
+  const enriched = items.map((b) => {
     const j = evaluateJoinability(b);
     return {
       ...b.toObject(),
@@ -302,7 +331,8 @@ exports.getMyPujaBookings = asyncHandler(async (req, res) => {
     };
   });
 
-  res.json({ bookings: enriched });
+  // keep `bookings` for backward compat; `items` for paginated consumers
+  res.json({ items: enriched, total, page, limit, bookings: enriched });
 });
 
 // @route GET /api/teacher/specific-puja/bookings/:id
@@ -440,6 +470,28 @@ exports.completePujaBooking = asyncHandler(async (req, res) => {
   await booking.save();
 
   res.json({ booking });
+});
+
+// @route GET /api/teacher/specific-puja/packages
+// List packages assigned to this teacher, paginated + searchable
+exports.getMyPujaPackages = asyncHandler(async (req, res) => {
+  const { search, status } = req.query;
+  const page = clampInt(req.query.page, 1, 1, 10_000);
+  const limit = clampInt(req.query.limit, 20, 1, 100);
+
+  const match = { teacher: req.user._id };
+  if (status) match.status = status;
+  if (search) match.name = new RegExp(search.trim(), "i");
+
+  const [items, total] = await Promise.all([
+    SpecificPujaPackage.find(match)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit),
+    SpecificPujaPackage.countDocuments(match),
+  ]);
+
+  res.json({ items, total, page, limit });
 });
 
 /* ------------------------------ Schedule ------------------------------ */

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Topbar from "@/components/admin/Topbar";
 import PageHeader from "@/components/admin/PageHeader";
 import Badge from "@/components/admin/Badge";
@@ -19,7 +19,6 @@ function formatPrice(price) {
   if (price === undefined || price === null) return "—";
   return `৳${Number(price).toLocaleString("en-IN")}`;
 }
-
 function formatScheduled(dateTime) {
   if (!dateTime) return "To be scheduled";
   return new Date(dateTime).toLocaleString("en-US", {
@@ -30,7 +29,6 @@ function formatScheduled(dateTime) {
     minute: "2-digit",
   });
 }
-
 function formatDuration(minutes) {
   if (!minutes) return "—";
   if (minutes < 60) return `${minutes} min`;
@@ -38,15 +36,13 @@ function formatDuration(minutes) {
   const m = minutes % 60;
   return m ? `${h}h ${m}m` : `${h}h`;
 }
-
 function toLocalInputValue(date) {
   const d = new Date(date);
   const pad = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-    d.getHours()
+    d.getHours(),
   )}:${pad(d.getMinutes())}`;
 }
-
 function groupSlotsByDay(slots) {
   const map = new Map();
   for (const iso of slots) {
@@ -68,7 +64,6 @@ const badgeVariant = {
   completed: "neutral",
   cancelled: "danger",
 };
-
 const statusLabel = {
   pending: "Pending",
   confirmed: "Confirmed",
@@ -84,21 +79,17 @@ export default function SpecificPujaPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
-  // form state
   const [openForm, setOpenForm] = useState(null);
   const [method, setMethod] = useState("phonepe");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
-  // per-package slot state
   const [slots, setSlots] = useState({});
   const [slotsLoading, setSlotsLoading] = useState({});
   const [slotsError, setSlotsError] = useState({});
   const [selectedSlot, setSelectedSlot] = useState({});
   const [customMode, setCustomMode] = useState({});
   const [selectedDay, setSelectedDay] = useState({});
-
-  /* --------------------------- data loading --------------------------- */
 
   const loadBookings = async () => {
     const { data } = await getMyPujaBookings();
@@ -112,13 +103,13 @@ export default function SpecificPujaPage() {
       try {
         const [packagesRes] = await Promise.all([
           browsePujaPackages(),
-          loadBookings(),
+          // loadBookings(),
         ]);
         setPackages(packagesRes.data.packages || []);
       } catch (err) {
         setLoadError(
           err?.response?.data?.message ||
-            "Could not load specific puja packages. Please try again."
+            "Could not load specific puja packages. Please try again.",
         );
       } finally {
         setLoading(false);
@@ -153,8 +144,8 @@ export default function SpecificPujaPage() {
     setMethod("phonepe");
     const next = openForm === pkg._id ? null : pkg._id;
     setOpenForm(next);
-
-    if (next && !slots[pkg._id] && !slotsLoading[pkg._id]) {
+    if (next) {
+      // always refresh so we don't show a slot someone else just took
       await fetchSlots(pkg._id);
     }
   };
@@ -191,7 +182,7 @@ export default function SpecificPujaPage() {
 
       if (!data.booking) {
         setFormError(
-          data.message || "Could not book this puja. Please try again."
+          data.message || "Could not book this puja. Please try again.",
         );
         return;
       }
@@ -202,10 +193,18 @@ export default function SpecificPujaPage() {
       setCustomMode((c) => ({ ...c, [pkg._id]: false }));
       setSelectedDay((d) => ({ ...d, [pkg._id]: null }));
     } catch (err) {
-      setFormError(
+      const status = err?.response?.status;
+      const msg =
         err?.response?.data?.message ||
-          "Could not book this puja. Please try again."
-      );
+        "Could not book this puja. Please try again.";
+
+      setFormError(msg);
+
+      // Slot taken between page load and submit → refresh the picker
+      if (status === 409) {
+        await fetchSlots(pkg._id);
+        setSelectedSlot((s) => ({ ...s, [pkg._id]: null }));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -219,10 +218,8 @@ export default function SpecificPujaPage() {
     const list = slots[pkg._id] || [];
     const grouped = groupSlotsByDay(list);
     const isCustom = !!customMode[pkg._id];
-
     const activeDay =
       selectedDay[pkg._id] || (grouped[0] ? grouped[0].day : null);
-
     const activeDaySlots =
       grouped.find((g) => g.day === activeDay)?.times || [];
 
@@ -249,8 +246,7 @@ export default function SpecificPujaPage() {
             <button
               type="button"
               onClick={() => fetchSlots(pkg._id)}
-              className="underline"
-            >
+              className="underline">
               Retry
             </button>
           </p>
@@ -272,8 +268,7 @@ export default function SpecificPujaPage() {
                       active
                         ? "bg-maroon text-ivory border-maroon"
                         : "bg-surface border-border hover:border-maroon"
-                    }`}
-                  >
+                    }`}>
                     {day}
                   </button>
                 );
@@ -295,8 +290,7 @@ export default function SpecificPujaPage() {
                       active
                         ? "bg-maroon text-ivory border-maroon"
                         : "bg-surface border-border hover:border-maroon"
-                    }`}
-                  >
+                    }`}>
                     {dt.toLocaleTimeString("en-US", {
                       hour: "numeric",
                       minute: "2-digit",
@@ -336,14 +330,12 @@ export default function SpecificPujaPage() {
             required
             className="input"
             min={toLocalInputValue(
-              new Date(
-                Date.now() + (pkg.minLeadTimeHours ?? 24) * 3600 * 1000
-              )
+              new Date(Date.now() + (pkg.minLeadTimeHours ?? 24) * 3600 * 1000),
             )}
             max={toLocalInputValue(
               new Date(
-                Date.now() + (pkg.maxLeadTimeDays ?? 60) * 24 * 3600 * 1000
-              )
+                Date.now() + (pkg.maxLeadTimeDays ?? 60) * 24 * 3600 * 1000,
+              ),
             )}
           />
         )}
@@ -378,8 +370,7 @@ export default function SpecificPujaPage() {
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-5 py-8 text-center text-inkSoft"
-                  >
+                    className="px-5 py-8 text-center text-inkSoft">
                     You haven&apos;t booked a specific puja yet.
                   </td>
                 </tr>
@@ -388,15 +379,12 @@ export default function SpecificPujaPage() {
                 const proposed =
                   b.proposedDateTime || b.scheduledDateTime || null;
                 const canShowJoin =
-                  b.status === "confirmed" &&
-                  b.liveKitRoomId &&
-                  b.joinability;
+                  b.status === "confirmed" && b.liveKitRoomId && b.joinability;
 
                 return (
                   <tr
                     key={b._id}
-                    className="border-b border-border last:border-0"
-                  >
+                    className="border-b border-border last:border-0">
                     <td className="px-5 py-3.5 font-medium">
                       {b.package?.name || "Package removed"}
                     </td>
@@ -410,13 +398,11 @@ export default function SpecificPujaPage() {
                         </span>
                       ) : b.status === "cancelled" ? (
                         <span className="line-through">
-                          {formatScheduled(
-                            b.confirmedDateTime || proposed
-                          )}
+                          {formatScheduled(b.confirmedDateTime || proposed)}
                         </span>
                       ) : (
                         formatScheduled(
-                          b.confirmedDateTime || b.scheduledDateTime
+                          b.confirmedDateTime || b.scheduledDateTime,
                         )
                       )}
                     </td>
@@ -463,16 +449,13 @@ export default function SpecificPujaPage() {
         subtitle="A private, one-on-one puja booked just for you"
       />
       <main className="px-6 lg:px-10 py-8 space-y-10">
-        {/* Packages */}
         <div>
           <PageHeader
             title="Available Puja Packages"
             description="After payment, this is scheduled individually and conducted in a private session for you."
           />
 
-          {loading && (
-            <p className="text-sm text-inkSoft">Loading packages…</p>
-          )}
+          {loading && <p className="text-sm text-inkSoft">Loading packages…</p>}
           {!loading && loadError && (
             <p className="text-sm text-danger">{loadError}</p>
           )}
@@ -489,8 +472,7 @@ export default function SpecificPujaPage() {
                 return (
                   <div
                     key={pkg._id}
-                    className="bg-surface border border-border rounded-xl p-5 flex flex-col gap-3"
-                  >
+                    className="bg-surface border border-border rounded-xl p-5 flex flex-col gap-3">
                     <div className="flex items-start justify-between gap-3">
                       <h3 className="font-display text-lg font-semibold">
                         {pkg.name}
@@ -519,8 +501,7 @@ export default function SpecificPujaPage() {
                       <button
                         type="button"
                         onClick={() => openBookingForm(pkg)}
-                        className="bg-maroon text-ivory px-4 py-2 rounded-lg text-sm font-semibold"
-                      >
+                        className="bg-maroon text-ivory px-4 py-2 rounded-lg text-sm font-semibold">
                         {isOpen ? "Cancel" : "Book This Puja"}
                       </button>
                     </div>
@@ -528,8 +509,7 @@ export default function SpecificPujaPage() {
                     {isOpen && (
                       <form
                         onSubmit={(e) => handleBook(e, pkg)}
-                        className="pt-3 border-t border-border space-y-4"
-                      >
+                        className="pt-3 border-t border-border space-y-4">
                         {(pkg.requiredInfoFields || []).length > 0 && (
                           <div className="space-y-3">
                             <p className="text-xs font-medium text-inkSoft">
@@ -560,22 +540,22 @@ export default function SpecificPujaPage() {
                           <select
                             value={method}
                             onChange={(e) => setMethod(e.target.value)}
-                            className="input"
-                          >
+                            className="input">
                             <option value="phonepe">PhonePe</option>
                             <option value="paypal">PayPal</option>
                           </select>
                         </div>
 
                         {formError && (
-                          <p className="text-sm text-danger">{formError}</p>
+                          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                            {formError}
+                          </div>
                         )}
 
                         <button
                           type="submit"
                           disabled={submitting}
-                          className="w-full bg-maroon text-ivory px-4 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
-                        >
+                          className="w-full bg-maroon text-ivory px-4 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60">
                           {submitting
                             ? "Processing…"
                             : `Confirm & Pay ${formatPrice(pkg.price)}`}
@@ -593,7 +573,6 @@ export default function SpecificPujaPage() {
           )}
         </div>
 
-        {/* My Bookings */}
         <div>
           <h3 className="font-display font-semibold text-lg mb-4">
             My Bookings
