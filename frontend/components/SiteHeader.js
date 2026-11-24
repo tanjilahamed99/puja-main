@@ -12,8 +12,8 @@ import LangSwitcher from "./LangSwitcher";
 
 const NAV_LINKS = [
   { href: "#how-it-works", label: "How it works" },
-  { href: "#courses", label: "Courses" },
   { href: "#free-classes", label: "Free Classes" },
+  { href: "#courses", label: "Courses" },
   { href: "#specific-puja", label: "Specific Puja" },
 ];
 
@@ -94,6 +94,7 @@ export default function SiteHeader() {
               </a>
             ))}
           </nav>
+          <LangSwitcher />
           <div className="flex flex-col gap-2.5 pt-2 border-t border-border">
             {user ? (
               <Link

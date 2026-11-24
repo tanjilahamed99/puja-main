@@ -13,6 +13,7 @@ import {
   Menu,
   X,
   LogOut,
+  Settings,
 } from "lucide-react";
 import { useAuthStore } from "@/features/Useauthstore";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { href: "/admin/specific-puja", label: "Specific Puja", icon: Flame },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/payments", label: "Payments & Donations", icon: Wallet },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export default function Sidebar() {
@@ -65,7 +67,7 @@ export default function Sidebar() {
           ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}>
         <div className="flex items-center justify-between px-5 py-6">
           <div className="flex items-center gap-2.5">
-             <Logo />
+            <Logo />
             <span className="font-display text-lg font-semibold tracking-wide">
               Karmkand Bharti
             </span>

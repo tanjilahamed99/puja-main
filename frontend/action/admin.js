@@ -172,3 +172,9 @@ export const completePujaBooking = (id) => {
     status: "completed",
   });
 };
+
+// settings
+
+export const getLiveKitSettings = () => API.get("/admin/settings/livekit");
+export const updateLiveKitSettings = (payload) =>
+  API.put("/admin/settings/livekit", payload);
