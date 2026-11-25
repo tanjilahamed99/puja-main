@@ -16,6 +16,9 @@ const {
   startPujaBooking,
   getMyPujaBookings,
   getMyPujaPackages,
+  confirmPujaBooking, // ← new
+  reschedulePujaBooking, // ← new
+  cancelPujaBooking, // ← new
 } = require("../controllers/teachercontroller");
 
 const router = express.Router();
@@ -32,22 +35,26 @@ router.get("/free-classes", getMyFreeClasses);
 router.post("/free-classes/:id/start", startFreeClassSession);
 router.post("/free-classes/:id/end", endFreeClassSession);
 
-// LIST (plural)
+// Specific puja — list, packages
 router.get("/specific-puja/bookings", getMyPujaBookings);
-// DETAIL (singular)
+router.get("/specific-puja/packages", getMyPujaPackages);
+
+// Specific puja — single booking
 router.get("/specific-puja/bookings/:id", getMyPujaBooking);
-// TOKEN
+
+// Specific puja — actions
+router.patch("/specific-puja/bookings/:id/confirm", confirmPujaBooking); // ← new
+router.patch("/specific-puja/bookings/:id/reschedule", reschedulePujaBooking); // ← new
+router.patch("/specific-puja/bookings/:id/cancel", cancelPujaBooking); // ← new
+router.patch("/specific-puja/bookings/:id/complete", completePujaBooking);
+router.post("/specific-puja/bookings/:id/start", startPujaBooking);
+
+// Specific puja — live session
 router.get(
   "/specific-puja/bookings/:id/livekit-token",
   getPujaBookingLiveKitToken,
 );
-router.get("/specific-puja/packages", getMyPujaPackages);
 
-// START
-router.post("/specific-puja/bookings/:id/start", startPujaBooking);
-// COMPLETE
-router.patch("/specific-puja/bookings/:id/complete", completePujaBooking);
 router.get("/schedule/upcoming", getUpcomingSchedule);
-router.get("/courses/:id/livekit-token", getCourseLiveKitToken);
 
 module.exports = router;

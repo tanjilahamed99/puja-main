@@ -40,3 +40,14 @@ export const getMyPujaBookings = (params = {}) =>
 
 export const getMyPujaBooking = (id) =>
   API.get(`/teacher/specific-puja/bookings/${id}`);
+
+
+// ── Specific puja — actions ───────────────────────────
+export const confirmPujaBooking = (id, data = {}) =>
+  API.patch(`/teacher/specific-puja/bookings/${id}/confirm`, data);
+
+export const reschedulePujaBooking = (id, data) =>
+  API.patch(`/teacher/specific-puja/bookings/${id}/reschedule`, data);
+
+export const cancelPujaBooking = (id, data = {}) =>
+  API.patch(`/teacher/specific-puja/bookings/${id}/cancel`, data);
