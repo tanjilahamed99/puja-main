@@ -414,37 +414,37 @@ exports.bookPujaPackage = asyncHandler(async (req, res) => {
   }
 
   // ---- Prevent double-booking the same teacher in an overlapping window ----
-// controllers/studentController.js (inside bookPujaPackage, replace the conflict block)
+  // controllers/studentController.js (inside bookPujaPackage, replace the conflict block)
 
-if (pkg.teacher) {
-  const duration = pkg.durationMinutes || 60;
-  const windowStart = new Date(proposed.getTime() - duration * 60 * 1000);
-  const windowEnd = new Date(proposed.getTime() + duration * 60 * 1000);
+  if (pkg.teacher) {
+    const duration = pkg.durationMinutes || 60;
+    const windowStart = new Date(proposed.getTime() - duration * 60 * 1000);
+    const windowEnd = new Date(proposed.getTime() + duration * 60 * 1000);
 
-  const conflict = await SpecificPujaBooking.findOne({
-    package: {
-      $in: await SpecificPujaPackage.find({
-        teacher: pkg.teacher,
-      }).distinct("_id"),
-    },
-    status: { $in: ["pending", "confirmed"] },
-    scheduledDateTime: { $gt: windowStart, $lt: windowEnd },
-  });
-
-  if (conflict) {
-    res.status(409);
-    // Send a machine-readable response so the frontend can auto-refresh the slot list
-    return res.json({
-      message:
-        "That time slot has just been booked by someone else. Please pick another time.",
-      conflict: {
-        scheduledDateTime: conflict.scheduledDateTime,
-        durationMinutes: conflict.durationMinutes,
+    const conflict = await SpecificPujaBooking.findOne({
+      package: {
+        $in: await SpecificPujaPackage.find({
+          teacher: pkg.teacher,
+        }).distinct("_id"),
       },
-      refreshSlots: true,
+      status: { $in: ["pending", "confirmed"] },
+      scheduledDateTime: { $gt: windowStart, $lt: windowEnd },
     });
+
+    if (conflict) {
+      res.status(409);
+      // Send a machine-readable response so the frontend can auto-refresh the slot list
+      return res.json({
+        message:
+          "That time slot has just been booked by someone else. Please pick another time.",
+        conflict: {
+          scheduledDateTime: conflict.scheduledDateTime,
+          durationMinutes: conflict.durationMinutes,
+        },
+        refreshSlots: true,
+      });
+    }
   }
-}
 
   // ---- Payment (unchanged — still assumes gateway confirmed client-side) ----
   const payment = await Payment.create({
@@ -632,4 +632,65 @@ exports.getMyCertificates = asyncHandler(async (req, res) => {
     .populate("course", "title")
     .sort({ issuedAt: -1 });
   res.json({ certificates });
+});
+
+// @route GET /api/student/specific-puja/bookings
+// List all bookings for the logged-in student
+exports.getMyPujaBookings = asyncHandler(async (req, res) => {
+  const bookings = await SpecificPujaBooking.find({ user: req.user._id })
+    .populate("package", "name description price durationMinutes")
+    .sort({ scheduledDateTime: -1 });
+
+  const enriched = bookings.map((b) => {
+    const joinability = evaluateJoinability(b);
+    return {
+      ...b.toObject(),
+      joinability: {
+        canJoin: joinability.canJoin,
+        reason: joinability.reason || null,
+        opensAt: joinability.opensAt,
+        closesAt: joinability.closesAt,
+      },
+    };
+  });
+
+  res.json({ bookings: enriched });
+});
+
+// @route POST /api/student/specific-puja/bookings/:id/cancel
+// Student cancels their own booking (only if pending or confirmed, and not in the past)
+exports.cancelPujaBooking = asyncHandler(async (req, res) => {
+  const booking = await SpecificPujaBooking.findOne({
+    _id: req.params.id,
+    user: req.user._id,
+  });
+
+  if (!booking) {
+    res.status(404);
+    throw new Error("Booking not found");
+  }
+
+  if (booking.status === "cancelled") {
+    res.status(400);
+    throw new Error("This booking is already cancelled");
+  }
+
+  if (booking.status === "completed") {
+    res.status(400);
+    throw new Error("Completed bookings cannot be cancelled");
+  }
+
+  // Disallow cancelling past sessions
+  const when = booking.confirmedDateTime || booking.scheduledDateTime;
+  if (when && new Date(when).getTime() < Date.now()) {
+    res.status(400);
+    throw new Error("This session has already started and cannot be cancelled");
+  }
+
+  booking.status = "cancelled";
+  booking.cancelledAt = new Date();
+  booking.cancelledBy = req.user._id;
+  await booking.save();
+
+  res.json({ booking });
 });
