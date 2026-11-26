@@ -19,7 +19,7 @@ const admin = require("./routes/adminRoutes");
 const app = express();
 app.use(
   cors({
-    origin: [process.env.FRONTEND_URL, 'http://103.243.232.236:3010'],
+    origin: [process.env.FRONTEND_URL, 'https://karmkandbharti.sewamahe.in'],
     credentials: true,
   }),
 );
