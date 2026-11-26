@@ -27,10 +27,8 @@ export const deleteUser = (id) => {
 };
 
 // ---------------- Courses ----------------
-
-export const getCourses = () => {
-  return API.get("/admin/courses");
-};
+export const getCourses = (params = {}) =>
+  API.get("/admin/courses", { params });
 
 export const getCourse = (id) => {
   return API.get(`/admin/courses/${id}`);
@@ -88,10 +86,6 @@ export const getFreeClassDonations = (id) => {
 
 // ---------------- Specific Puja ----------------
 
-export const getPujaPackages = () => {
-  return API.get("/admin/specific-puja/packages");
-};
-
 export const createPujaPackage = (data) => {
   return API.post("/admin/specific-puja/packages", data);
 };
@@ -104,30 +98,23 @@ export const deletePujaPackage = (id) => {
   return API.delete(`/admin/specific-puja/packages/${id}`);
 };
 
-export const getPujaBookings = () => {
-  return API.get("/admin/specific-puja/bookings");
-};
-
 export const updatePujaBooking = (id, data) => {
   return API.patch(`/admin/specific-puja/bookings/${id}`, data);
 };
 
 // ---------------- Payments & Donations ----------------
 
-export const getPayments = () => {
-  return API.get("/admin/payments");
-};
-
-export const getPaymentSummary = () => {
-  return API.get("/admin/payments/summary");
-};
-
 export const getDonations = () => {
   return API.get("/admin/payments/donations");
 };
-export const getPaymentDonations = () => {
-  return API.get("/admin/payments/donations");
-};
+
+export const getPayments = (params = {}) =>
+  API.get("/admin/payments", { params });
+
+export const getPaymentDonations = (params = {}) =>
+  API.get("/admin/payments/donations", { params });
+
+export const getPaymentSummary = () => API.get("/admin/payments/summary");
 
 // ---------------- Dashboard ----------------
 
@@ -172,3 +159,15 @@ export const completePujaBooking = (id) => {
     status: "completed",
   });
 };
+
+export const getPujaPackages = (params = {}) =>
+  API.get("/admin/specific-puja/packages", { params });
+
+export const getPujaBookings = (params = {}) =>
+  API.get("/admin/specific-puja/bookings", { params });
+
+// settings
+
+export const getLiveKitSettings = () => API.get("/admin/settings/livekit");
+export const updateLiveKitSettings = (payload) =>
+  API.put("/admin/settings/livekit", payload);

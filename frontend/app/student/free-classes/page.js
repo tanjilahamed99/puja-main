@@ -8,7 +8,7 @@ import {
   browseFreeClasses,
   getFreeClassLiveKitToken,
 } from "@/action/student";
-import { Clock, Video } from "lucide-react";
+import { Clock } from "lucide-react";
 
 function formatSessionTime(dateTime) {
   if (!dateTime) return "Time TBD";

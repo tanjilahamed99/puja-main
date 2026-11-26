@@ -47,5 +47,9 @@ const courseSchema = new mongoose.Schema(
 
 courseSchema.index({ teacher: 1, status: 1 });
 courseSchema.index({ status: 1, startDate: 1 });
+// models/Course.js
+courseSchema.index({ createdAt: -1 });
+courseSchema.index({ status: 1, createdAt: -1 });
+courseSchema.index({ title: 1 });
 
 module.exports = mongoose.model("Course", courseSchema);

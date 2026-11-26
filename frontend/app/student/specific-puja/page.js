@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Topbar from "@/components/admin/Topbar";
 import PageHeader from "@/components/admin/PageHeader";
 import Badge from "@/components/admin/Badge";
@@ -11,6 +11,7 @@ import {
   getMyPujaBookings,
   getPujaPackageSlots,
   getPujaBookingLiveKitToken,
+  cancelPujaBooking,
 } from "@/action/student";
 
 /* ------------------------------ helpers ------------------------------ */
@@ -84,13 +85,11 @@ export default function SpecificPujaPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
-  // form state
   const [openForm, setOpenForm] = useState(null);
   const [method, setMethod] = useState("phonepe");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
-  // per-package slot state
   const [slots, setSlots] = useState({});
   const [slotsLoading, setSlotsLoading] = useState({});
   const [slotsError, setSlotsError] = useState({});
@@ -98,7 +97,8 @@ export default function SpecificPujaPage() {
   const [customMode, setCustomMode] = useState({});
   const [selectedDay, setSelectedDay] = useState({});
 
-  /* --------------------------- data loading --------------------------- */
+  const [cancellingId, setCancellingId] = useState(null);
+  const [cancelError, setCancelError] = useState("");
 
   const loadBookings = async () => {
     const { data } = await getMyPujaBookings();
@@ -153,8 +153,8 @@ export default function SpecificPujaPage() {
     setMethod("phonepe");
     const next = openForm === pkg._id ? null : pkg._id;
     setOpenForm(next);
-
-    if (next && !slots[pkg._id] && !slotsLoading[pkg._id]) {
+    if (next) {
+      // Always refresh so we don't show a slot someone else just took
       await fetchSlots(pkg._id);
     }
   };
@@ -202,12 +202,55 @@ export default function SpecificPujaPage() {
       setCustomMode((c) => ({ ...c, [pkg._id]: false }));
       setSelectedDay((d) => ({ ...d, [pkg._id]: null }));
     } catch (err) {
-      setFormError(
+      const status = err?.response?.status;
+      const msg =
         err?.response?.data?.message ||
-          "Could not book this puja. Please try again."
-      );
+        "Could not book this puja. Please try again.";
+
+      setFormError(msg);
+
+      // Slot taken between page load and submit → refresh the picker
+      if (status === 409) {
+        await fetchSlots(pkg._id);
+        setSelectedSlot((s) => ({ ...s, [pkg._id]: null }));
+      }
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  /* ------------------------------ cancel ------------------------------ */
+
+  const canCancel = (booking) => {
+    if (!["pending", "confirmed"].includes(booking.status)) return false;
+    const when =
+      booking.confirmedDateTime ||
+      booking.proposedDateTime ||
+      booking.scheduledDateTime;
+    if (!when) return true;
+    return new Date(when).getTime() > Date.now();
+  };
+
+  const handleCancelBooking = async (booking) => {
+    if (
+      !window.confirm(
+        "Cancel this puja booking? The priest will be notified and this slot will be freed."
+      )
+    )
+      return;
+
+    setCancelError("");
+    try {
+      setCancellingId(booking._id);
+      await cancelPujaBooking(booking._id);
+      await loadBookings();
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message ||
+        "Could not cancel the booking. Please try again.";
+      setCancelError(msg);
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -219,10 +262,8 @@ export default function SpecificPujaPage() {
     const list = slots[pkg._id] || [];
     const grouped = groupSlotsByDay(list);
     const isCustom = !!customMode[pkg._id];
-
     const activeDay =
       selectedDay[pkg._id] || (grouped[0] ? grouped[0].day : null);
-
     const activeDaySlots =
       grouped.find((g) => g.day === activeDay)?.times || [];
 
@@ -362,6 +403,11 @@ export default function SpecificPujaPage() {
   const renderBookings = () => {
     return (
       <div className="bg-surface border border-border rounded-xl overflow-hidden">
+        {cancelError && (
+          <div className="border-b border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">
+            {cancelError}
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -391,6 +437,7 @@ export default function SpecificPujaPage() {
                   b.status === "confirmed" &&
                   b.liveKitRoomId &&
                   b.joinability;
+                const showCancel = canCancel(b);
 
                 return (
                   <tr
@@ -429,20 +476,37 @@ export default function SpecificPujaPage() {
                       </Badge>
                     </td>
                     <td className="px-5 py-3.5 text-right">
-                      {canShowJoin ? (
-                        <JoinPujaButton
-                          bookingId={b._id}
-                          opensAt={b.joinability.opensAt}
-                          closesAt={b.joinability.closesAt}
-                          canJoin={b.joinability.canJoin}
-                          joinPath={`/live/specific-puja/student/${b._id}`}
-                          fetchToken={getPujaBookingLiveKitToken}
-                          label="Join"
-                          size="sm"
-                        />
-                      ) : (
-                        <span className="text-xs text-inkSoft">—</span>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        {canShowJoin && (
+                          <JoinPujaButton
+                            bookingId={b._id}
+                            opensAt={b.joinability.opensAt}
+                            closesAt={b.joinability.closesAt}
+                            canJoin={b.joinability.canJoin}
+                            joinPath={`/live/specific-puja/student/${b._id}`}
+                            fetchToken={getPujaBookingLiveKitToken}
+                            label="Join"
+                            size="sm"
+                          />
+                        )}
+
+                        {showCancel && (
+                          <button
+                            type="button"
+                            onClick={() => handleCancelBooking(b)}
+                            disabled={cancellingId === b._id}
+                            className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
+                          >
+                            {cancellingId === b._id
+                              ? "Cancelling…"
+                              : "Cancel"}
+                          </button>
+                        )}
+
+                        {!canShowJoin && !showCancel && (
+                          <span className="text-xs text-inkSoft">—</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -463,7 +527,6 @@ export default function SpecificPujaPage() {
         subtitle="A private, one-on-one puja booked just for you"
       />
       <main className="px-6 lg:px-10 py-8 space-y-10">
-        {/* Packages */}
         <div>
           <PageHeader
             title="Available Puja Packages"
@@ -568,7 +631,9 @@ export default function SpecificPujaPage() {
                         </div>
 
                         {formError && (
-                          <p className="text-sm text-danger">{formError}</p>
+                          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                            {formError}
+                          </div>
                         )}
 
                         <button
@@ -593,7 +658,6 @@ export default function SpecificPujaPage() {
           )}
         </div>
 
-        {/* My Bookings */}
         <div>
           <h3 className="font-display font-semibold text-lg mb-4">
             My Bookings

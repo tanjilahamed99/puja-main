@@ -45,4 +45,10 @@ const pujaBookingSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+pujaBookingSchema.index({ createdAt: -1 });
+pujaBookingSchema.index({ status: 1, createdAt: -1 });
+pujaBookingSchema.index({ user: 1, createdAt: -1 });
+pujaBookingSchema.index({ package: 1, createdAt: -1 });
+pujaBookingSchema.index({ package: 1, status: 1 });
+
 module.exports = mongoose.model("SpecificPujaBooking", pujaBookingSchema);

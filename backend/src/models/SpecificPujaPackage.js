@@ -28,4 +28,10 @@ const pujaPackageSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-module.exports = mongoose.model('SpecificPujaPackage', pujaPackageSchema);
+pujaPackageSchema.index({ createdAt: -1 });
+pujaPackageSchema.index({ status: 1, createdAt: -1 });
+pujaPackageSchema.index({ name: 1 }); // supports name prefix regex
+pujaPackageSchema.index({ teacher: 1, createdAt: -1 });
+pujaPackageSchema.index({ teacher: 1, status: 1 });
+
+module.exports = mongoose.model("SpecificPujaPackage", pujaPackageSchema);

@@ -44,6 +44,40 @@
         }
       }
     },
+    "freeSection": {
+      "eyebrow": "Free · Open to all",
+      "heading": "Free live Arti & Puja classes",
+      "subtitle": "Join a scheduled community session at no cost — just log in.",
+      "viewAll": "See all free classes",
+      "badge": "Free live",
+      "join": "Join class",
+      "seatsLeft": "seats left",
+      "mins": "min",
+      "empty": "No upcoming free classes yet — check back soon."
+    },
+    "coursesSection": {
+      "eyebrow": "Subscription courses",
+      "heading": "Structured puja courses",
+      "subtitle": "Complete a full course, attend live sessions, and earn a PDF certificate.",
+      "viewAll": "Browse all courses",
+      "lessons": "lessons",
+      "hours": "hrs",
+      "sessions": "sessions",
+      "students": "students",
+      "enroll": "Enroll",
+      "mins": "min",
+      "empty": "New courses are coming soon."
+    },
+    "pujaSection": {
+      "eyebrow": "Specific puja",
+      "heading": "Personal puja, performed for you",
+      "subtitle": "Book a private one-on-one virtual puja with an assigned priest.",
+      "viewAll": "See all puja packages",
+      "badge": "1-on-1",
+      "book": "Book puja",
+      "mins": "min",
+      "empty": "No puja packages available right now."
+    },
     "ways": {
       "eyebrow": "Three paths to learn",
       "heading": "Three Ways to Learn",

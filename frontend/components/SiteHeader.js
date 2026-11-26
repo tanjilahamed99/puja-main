@@ -11,9 +11,8 @@ import LangSwitcher from "./LangSwitcher";
 // import GoogleTranslate from "./GoogleTranslate";
 
 const NAV_LINKS = [
-  { href: "#how-it-works", label: "How it works" },
+  { href: "#free-classes", label: "Free Arti and Puja" },
   { href: "#courses", label: "Courses" },
-  { href: "#free-classes", label: "Free Classes" },
   { href: "#specific-puja", label: "Specific Puja" },
 ];
 
@@ -94,6 +93,7 @@ export default function SiteHeader() {
               </a>
             ))}
           </nav>
+          <LangSwitcher />
           <div className="flex flex-col gap-2.5 pt-2 border-t border-border">
             {user ? (
               <Link

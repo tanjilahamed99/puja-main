@@ -5,13 +5,34 @@ const Enrollment = require("../models/Enrollment");
 const Certificate = require("../models/Certificate");
 const { evaluateCourseJoinability } = require("../utils/courseSession");
 
+/* helper */
+function clampInt(v, def, min = 1, max = 100) {
+  const n = parseInt(v, 10);
+  if (Number.isNaN(n)) return def;
+  return Math.min(max, Math.max(min, n));
+}
+
 /* ------------------------------ Courses ------------------------------ */
 
 // @route GET /api/admin/courses
+// Supports: ?page=&limit=&search=&status=
 const getCourses = asyncHandler(async (req, res) => {
-  const courses = await Course.find()
-    .populate("teacher", "name email")
-    .sort({ createdAt: -1 });
+  const { search, status } = req.query;
+  const page = clampInt(req.query.page, 1, 1, 10_000);
+  const limit = clampInt(req.query.limit, 20, 1, 100);
+
+  const match = {};
+  if (status) match.status = status;
+  if (search) match.title = new RegExp(search.trim(), "i");
+
+  const [courses, total] = await Promise.all([
+    Course.find(match)
+      .populate("teacher", "name email")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit),
+    Course.countDocuments(match),
+  ]);
 
   const enriched = await Promise.all(
     courses.map(async (course) => {
@@ -19,9 +40,7 @@ const getCourses = asyncHandler(async (req, res) => {
         course: course._id,
         status: { $ne: "cancelled" },
       });
-
       const j = evaluateCourseJoinability(course);
-
       return {
         ...course.toObject(),
         studentCount,
@@ -36,7 +55,15 @@ const getCourses = asyncHandler(async (req, res) => {
     }),
   );
 
-  res.json({ courses: enriched, success: true });
+  // keep `courses` for backward compatibility; `items` for paginated consumers
+  res.json({
+    items: enriched,
+    total,
+    page,
+    limit,
+    courses: enriched,
+    success: true,
+  });
 });
 
 // @route GET /api/admin/courses/:id
@@ -49,9 +76,7 @@ const getCourse = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("Course not found");
   }
-
   const j = evaluateCourseJoinability(course);
-
   res.json({
     course,
     joinability: {
@@ -65,7 +90,9 @@ const getCourse = asyncHandler(async (req, res) => {
   });
 });
 
-// @route POST /api/admin/courses
+/* Everything below unchanged — createCourse, updateCourse, deleteCourse,
+   getCourseEnrollments, completeEnrollment */
+
 const createCourse = asyncHandler(async (req, res) => {
   const {
     title,
@@ -112,14 +139,12 @@ const createCourse = asyncHandler(async (req, res) => {
   res.status(201).json({ course, success: true });
 });
 
-// @route PATCH /api/admin/courses/:id
 const updateCourse = asyncHandler(async (req, res) => {
   const course = await Course.findById(req.params.id);
   if (!course) {
     res.status(404);
     throw new Error("Course not found");
   }
-
   [
     "title",
     "description",
@@ -139,12 +164,10 @@ const updateCourse = asyncHandler(async (req, res) => {
   ].forEach((field) => {
     if (req.body[field] !== undefined) course[field] = req.body[field];
   });
-
   await course.save();
   res.json({ course, success: true });
 });
 
-// @route DELETE /api/admin/courses/:id
 const deleteCourse = asyncHandler(async (req, res) => {
   const course = await Course.findById(req.params.id);
   if (!course) {
@@ -155,19 +178,14 @@ const deleteCourse = asyncHandler(async (req, res) => {
   res.json({ message: "Course deleted", success: true });
 });
 
-/* ------------------------------ Enrollments ------------------------------ */
-
-// @route GET /api/admin/courses/:id/enrollments
 const getCourseEnrollments = asyncHandler(async (req, res) => {
   const enrollments = await Enrollment.find({ course: req.params.id })
     .populate("student", "name email")
     .populate("certificate")
     .sort({ createdAt: -1 });
-
   res.json({ enrollments, success: true });
 });
 
-// @route PATCH /api/admin/enrollments/:id/complete
 const completeEnrollment = asyncHandler(async (req, res) => {
   const enrollment = await Enrollment.findById(req.params.id)
     .populate("course")

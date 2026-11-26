@@ -45,7 +45,7 @@ export default function StudentFreeClassLivePage() {
       title={fc?.title}
       fetchToken={getFreeClassLiveKitToken}
       startedAt={fc?.startedAt}
-      backHref="/student/free-classes"
+      backHref="/student/free-classes/"
     />
   );
 }

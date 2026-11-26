@@ -13,6 +13,8 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const students = require("./routes/studentroutes");
 const teachers = require("./routes/teacherroutes");
+const home = require("./routes/homeRouters");
+const admin = require("./routes/adminRoutes");
 
 const app = express();
 app.use(
@@ -39,6 +41,8 @@ app.use("/api/admin/payments", paymentRoutes);
 app.use("/api/admin/dashboard", dashboardRoutes);
 app.use("/api/student", students);
 app.use("/api/teacher", teachers);
+app.use("/api/home", home);
+app.use("/api/admin", admin);
 
 app.use(notFound);
 app.use(errorHandler);

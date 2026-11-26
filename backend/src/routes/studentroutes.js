@@ -16,7 +16,9 @@ const {
   getPujaBookingLiveKitToken,
   getMyPujaBooking,
   getFreeClass,
-  getMyCourse
+  getMyCourse,
+  cancelPujaBooking,
+  getMyPujaBookings
 } = require("../controllers/Studentcontroller");
 
 const router = express.Router();
@@ -36,6 +38,8 @@ router.get("/free-classes/:id", getFreeClass);
 router.get("/free-classes/:id/livekit-token", getFreeClassLiveKitToken);
 
 router.get("/specific-puja/packages", browsePujaPackages);
+router.get("/specific-puja/bookings", getMyPujaBookings);        
+router.post("/specific-puja/bookings/:id/cancel", cancelPujaBooking); // ← new 
 router.post("/specific-puja/packages/:id/book", bookPujaPackage);
 router.get("/specific-puja/bookings/:id", getMyPujaBooking);
 router.get("/specific-puja/packages/:id/slots", getPujaPackageSlots);

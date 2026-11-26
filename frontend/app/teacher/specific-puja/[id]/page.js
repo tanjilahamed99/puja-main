@@ -18,6 +18,9 @@ import {
   getMyPujaBooking,
   completePujaBooking,
   getPujaBookingLiveKitToken,
+  confirmPujaBooking,
+  reschedulePujaBooking,
+  cancelPujaBooking,
 } from "@/action/teacher";
 
 import Badge from "@/components/admin/Badge";
@@ -83,6 +86,10 @@ export default function TeacherSpecificPujaDetailsPage() {
   const [booking, setBooking] = useState(null);
   const [joinability, setJoinability] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const [confirming, setConfirming] = useState(false);
+  const [rescheduling, setRescheduling] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [completing, setCompleting] = useState(false);
 
   const loadBooking = async () => {
@@ -109,33 +116,131 @@ export default function TeacherSpecificPujaDetailsPage() {
     }
   }, [params?.id]);
 
+  /* ------------------------------ actions ------------------------------ */
+
+  const handleConfirm = async () => {
+    if (!booking || confirming) return;
+
+    if (
+      !window.confirm(
+        "Confirm this booking at the requested time? The student will receive a confirmation email and be able to join the session."
+      )
+    )
+      return;
+
+    try {
+      setConfirming(true);
+      const { data } = await confirmPujaBooking(booking._id);
+      setBooking(data?.booking || booking);
+      toast.success("Booking confirmed — email sent to student");
+      await loadBooking();
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Could not confirm booking"
+      );
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  const handleReschedule = async () => {
+    if (!booking || rescheduling) return;
+
+    const currentIso =
+      booking.confirmedDateTime || booking.scheduledDateTime || "";
+    const currentLocal = currentIso
+      ? new Date(currentIso).toISOString().slice(0, 16)
+      : "";
+
+    const input = window.prompt(
+      "New date & time (YYYY-MM-DDTHH:mm in UTC):",
+      currentLocal
+    );
+    if (!input) return;
+
+    const dt = new Date(input);
+    if (isNaN(dt.getTime())) {
+      toast.error("Invalid date/time format");
+      return;
+    }
+
+    const reason = window.prompt("Reason for reschedule (optional):") || "";
+
+    try {
+      setRescheduling(true);
+      const { data } = await reschedulePujaBooking(booking._id, {
+        confirmedDateTime: dt.toISOString(),
+        reason,
+      });
+      setBooking(data?.booking || booking);
+      toast.success("Booking rescheduled — email sent to student");
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Could not reschedule booking"
+      );
+    } finally {
+      setRescheduling(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!booking || cancelling) return;
+
+    const reason = window.prompt(
+      "Reason for cancelling this booking? (optional — student will be notified)"
+    );
+    if (reason === null) return; // user hit Cancel on the prompt
+
+    if (
+      !window.confirm(
+        "Cancel this booking? The student will receive a cancellation email."
+      )
+    )
+      return;
+
+    try {
+      setCancelling(true);
+      const { data } = await cancelPujaBooking(booking._id, { reason });
+      setBooking(data?.booking || booking);
+      toast.success("Booking cancelled — email sent to student");
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Could not cancel booking"
+      );
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const handleComplete = async () => {
     if (!booking || completing) return;
 
-    const confirmed = window.confirm(
-      "Are you sure you want to mark this puja as completed?"
-    );
-    if (!confirmed) return;
+    if (
+      !window.confirm(
+        "Are you sure you want to mark this puja as completed?"
+      )
+    )
+      return;
 
     try {
       setCompleting(true);
       const { data } = await completePujaBooking(booking._id);
       setBooking(data?.booking || booking);
-      toast.success("Puja booking completed successfully");
+      toast.success("Puja completed — email sent to student");
     } catch (err) {
       toast.error(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Failed to complete puja"
+        err?.response?.data?.message || "Failed to complete puja"
       );
     } finally {
       setCompleting(false);
     }
   };
 
+  /* ------------------------------ loading / empty ------------------------------ */
+
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 px-6 lg:px-10 py-8">
         <div>
           <div className="h-4 w-32 animate-pulse rounded bg-gray-200" />
           <div className="mt-3 h-7 w-64 animate-pulse rounded bg-gray-200" />
@@ -152,15 +257,19 @@ export default function TeacherSpecificPujaDetailsPage() {
 
   if (!booking) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white px-5 py-14 text-center">
-        <p className="text-sm font-medium text-gray-700">Booking not found</p>
-        <Link
-          href="/teacher/specific-puja"
-          className="mt-4 inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          <ArrowLeft size={15} />
-          Back to bookings
-        </Link>
+      <div className="px-6 lg:px-10 py-8">
+        <div className="rounded-xl border border-gray-200 bg-white px-5 py-14 text-center">
+          <p className="text-sm font-medium text-gray-700">
+            Booking not found
+          </p>
+          <Link
+            href="/teacher/specific-puja"
+            className="mt-4 inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <ArrowLeft size={15} />
+            Back to bookings
+          </Link>
+        </div>
       </div>
     );
   }
@@ -168,10 +277,11 @@ export default function TeacherSpecificPujaDetailsPage() {
   const isCompleted = booking.status === "completed";
   const isCancelled = booking.status === "cancelled";
   const isConfirmed = booking.status === "confirmed";
+  const isPending = booking.status === "pending";
 
   return (
     <div className="space-y-6 px-6 lg:px-10 py-8">
-      {/* Page Header */}
+      {/* ═════════ PAGE HEADER ═════════ */}
       <div>
         <Link
           href="/teacher/specific-puja"
@@ -197,7 +307,7 @@ export default function TeacherSpecificPujaDetailsPage() {
         </div>
       </div>
 
-      {/* Live Session — surfaced first when confirmed */}
+      {/* ═════════ LIVE SESSION (only when confirmed & room exists) ═════════ */}
       {isConfirmed && booking.liveKitRoomId && (
         <div className="rounded-xl border border-gray-200 bg-white">
           <div className="border-b border-gray-200 px-5 py-4">
@@ -205,8 +315,8 @@ export default function TeacherSpecificPujaDetailsPage() {
               Live Puja Session
             </h2>
             <p className="mt-0.5 text-sm text-gray-500">
-              Joining opens 5 minutes before the scheduled time and stays open
-              for the session duration.
+              Joining opens 5 minutes before the scheduled time and stays
+              open for the session duration.
             </p>
           </div>
 
@@ -248,12 +358,14 @@ export default function TeacherSpecificPujaDetailsPage() {
         </div>
       )}
 
-      {/* Main Information */}
+      {/* ═════════ CUSTOMER + PACKAGE ═════════ */}
       <div className="grid gap-5 lg:grid-cols-2">
         {/* Customer Card */}
         <div className="rounded-xl border border-gray-200 bg-white">
           <div className="border-b border-gray-200 px-5 py-4">
-            <h2 className="text-base font-semibold text-gray-900">Customer</h2>
+            <h2 className="text-base font-semibold text-gray-900">
+              Customer
+            </h2>
             <p className="mt-0.5 text-sm text-gray-500">
               Customer information for this booking
             </p>
@@ -324,7 +436,7 @@ export default function TeacherSpecificPujaDetailsPage() {
         </div>
       </div>
 
-      {/* Schedule Card */}
+      {/* ═════════ SCHEDULE ═════════ */}
       <div className="rounded-xl border border-gray-200 bg-white">
         <div className="border-b border-gray-200 px-5 py-4">
           <h2 className="text-base font-semibold text-gray-900">Schedule</h2>
@@ -340,7 +452,9 @@ export default function TeacherSpecificPujaDetailsPage() {
             </div>
             <div>
               <p className="text-xs text-gray-500">
-                {booking.confirmedDateTime ? "Confirmed Time" : "Requested Time"}
+                {booking.confirmedDateTime
+                  ? "Confirmed Time"
+                  : "Requested Time"}
               </p>
               <p className="mt-1 text-sm font-medium text-gray-900">
                 {formatFullDateTime(
@@ -378,7 +492,7 @@ export default function TeacherSpecificPujaDetailsPage() {
         </div>
       </div>
 
-      {/* Participant Information */}
+      {/* ═════════ PARTICIPANT INFO ═════════ */}
       {booking.participantInfo &&
         Object.keys(booking.participantInfo).length > 0 && (
           <div className="rounded-xl border border-gray-200 bg-white">
@@ -392,22 +506,26 @@ export default function TeacherSpecificPujaDetailsPage() {
             </div>
 
             <div className="grid gap-x-8 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
-              {Object.entries(booking.participantInfo).map(([key, value]) => (
-                <div key={key}>
-                  <p className="text-xs text-gray-500">
-                    {formatFieldName(key)}
-                  </p>
-                  <p className="mt-1 break-words text-sm font-medium text-gray-900">
-                    {String(value || "—")}
-                  </p>
-                </div>
-              ))}
+              {Object.entries(booking.participantInfo).map(
+                ([key, value]) => (
+                  <div key={key}>
+                    <p className="text-xs text-gray-500">
+                      {formatFieldName(key)}
+                    </p>
+                    <p className="mt-1 break-words text-sm font-medium text-gray-900">
+                      {String(value || "—")}
+                    </p>
+                  </div>
+                )
+              )}
             </div>
           </div>
         )}
 
-      {/* Bottom Actions */}
-      {!isCompleted && !isCancelled && (
+      {/* ═════════ ACTION BAR ═════════ */}
+
+      {/* PENDING → Confirm / Cancel */}
+      {isPending && (
         <div className="flex flex-col-reverse gap-3 border-t border-gray-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/teacher/specific-puja"
@@ -417,25 +535,74 @@ export default function TeacherSpecificPujaDetailsPage() {
             Back to Bookings
           </Link>
 
-          <button
-            type="button"
-            onClick={handleComplete}
-            disabled={completing || !isConfirmed}
-            title={
-              !isConfirmed
-                ? "Only confirmed bookings can be completed"
-                : undefined
-            }
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-gray-900 px-5 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <CheckCircle2 size={16} />
-            {completing ? "Completing..." : "Mark as Completed"}
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {cancelling ? "Cancelling…" : "Cancel Booking"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleConfirm}
+              disabled={confirming}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-green-600 px-5 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <CheckCircle2 size={16} />
+              {confirming ? "Confirming…" : "Confirm Booking"}
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Completed footer */}
-      {isCompleted && (
+      {/* CONFIRMED → Reschedule / Cancel / Complete */}
+      {isConfirmed && (
+        <div className="flex flex-col-reverse gap-3 border-t border-gray-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <Link
+            href="/teacher/specific-puja"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+          >
+            <ArrowLeft size={15} />
+            Back to Bookings
+          </Link>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {cancelling ? "Cancelling…" : "Cancel Booking"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleReschedule}
+              disabled={rescheduling}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {rescheduling ? "Rescheduling…" : "Reschedule"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleComplete}
+              disabled={completing}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-gray-900 px-5 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <CheckCircle2 size={16} />
+              {completing ? "Completing…" : "Mark as Completed"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* COMPLETED or CANCELLED → read-only footer */}
+      {(isCompleted || isCancelled) && (
         <div className="flex items-center justify-between border-t border-gray-200 pt-5">
           <Link
             href="/teacher/specific-puja"
@@ -445,10 +612,16 @@ export default function TeacherSpecificPujaDetailsPage() {
             Back to Bookings
           </Link>
 
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
-            <CheckCircle2 size={17} className="text-green-600" />
-            Puja Completed
-          </div>
+          {isCompleted ? (
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
+              <CheckCircle2 size={17} className="text-green-600" />
+              Puja Completed
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-sm font-medium text-red-600">
+              Booking Cancelled
+            </div>
+          )}
         </div>
       )}
     </div>
