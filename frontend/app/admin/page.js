@@ -25,7 +25,7 @@ import {
 } from "@/action/admin";
 
 function formatCurrency(amount) {
-  return `৳ ${Number(amount || 0).toLocaleString("en-IN")}`;
+  return `₹ ${Number(amount || 0).toLocaleString("en-IN")}`;
 }
 
 function formatDate(date) {

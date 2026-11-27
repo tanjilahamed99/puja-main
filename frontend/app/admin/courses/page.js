@@ -301,7 +301,7 @@ export default function CoursesPage() {
                         <dt className="text-inkSoft">Price</dt>
                         <dd className="text-ink mt-0.5">
                           {course.price != null
-                            ? `৳${Number(course.price).toLocaleString()}`
+                            ? `₹${Number(course.price).toLocaleString()}`
                             : "—"}
                         </dd>
                       </div>
@@ -383,7 +383,7 @@ export default function CoursesPage() {
                         </td>
                         <td className="px-5 py-3.5 text-inkSoft">
                           {course.price != null
-                            ? `৳${Number(course.price).toLocaleString()}`
+                            ? `₹${Number(course.price).toLocaleString()}`
                             : "—"}
                         </td>
                         <td className="px-5 py-3.5">

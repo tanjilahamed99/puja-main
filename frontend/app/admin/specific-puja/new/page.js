@@ -189,7 +189,7 @@ export default function NewSpecificPujaPage() {
           <Field label="Price">
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-inkSoft">
-                ৳
+                ₹
               </span>
               <input
                 type="number"

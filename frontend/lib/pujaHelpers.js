@@ -1,7 +1,7 @@
 // lib/pujaHelpers.js
 
 export function formatPrice(price) {
-  return `৳${Number(price || 0).toLocaleString("en-IN")}`;
+  return `₹${Number(price || 0).toLocaleString("en-IN")}`;
 }
 
 export function formatDateTime(date) {

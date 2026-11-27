@@ -7,7 +7,7 @@ import { browseCourses, enrollInCourse } from "@/action/student";
 
 function formatPrice(p) {
   if (p == null) return "—";
-  return `৳${Number(p).toLocaleString("en-IN")}`;
+  return `₹${Number(p).toLocaleString("en-IN")}`;
 }
 
 function scheduleText(course) {

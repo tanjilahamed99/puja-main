@@ -27,7 +27,7 @@ import {
 /* ───────── formatting helpers (unchanged) ───────── */
 
 function formatCurrency(amount) {
-  return `৳ ${Number(amount || 0).toLocaleString("en-IN")}`;
+  return `₹ ${Number(amount || 0).toLocaleString("en-IN")}`;
 }
 function formatDate(date) {
   if (!date) return "—";

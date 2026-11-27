@@ -18,7 +18,7 @@ import {
 
 function formatPrice(price) {
   if (price === undefined || price === null) return "—";
-  return `৳${Number(price).toLocaleString("en-IN")}`;
+  return `₹${Number(price).toLocaleString("en-IN")}`;
 }
 
 function formatScheduled(dateTime) {

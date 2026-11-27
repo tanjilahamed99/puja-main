@@ -27,7 +27,7 @@ function formatDateTime(date) {
 
 function formatDonation(amount) {
   if (!amount) return "—";
-  return `৳${Number(amount).toLocaleString("en-IN")}`;
+  return `₹${Number(amount).toLocaleString("en-IN")}`;
 }
 
 function getBadgeVariant(status) {
